@@ -1,0 +1,1 @@
+import sys, base64\n# Base64-encode the content, then decode it\n# This file reads base64 from stdin and writes decoded bytes to target\ndata = sys.stdin.buffer.read().strip()\nwith open(r'D:\jiuwen\main\skills\jiuwen-test-report\generate_test_report.py', 'wb') as f:\n    f.write(base64.b64decode(data))\nprint("Written OK")\n

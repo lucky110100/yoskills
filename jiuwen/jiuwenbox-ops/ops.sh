@@ -1,11 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
-JIUWENBOX_HOME="${JIUWENBOX_HOME:-$HOME/jiuwenswarm/jiuwenbox}"
+JIUWENBOX_HOME="${JIUWENBOX_HOME:-/home/luffy/jiuwenswarm/jiuwenbox}"
 JIUWENBOX_PORT="${JIUWENBOX_PORT:-8321}"
 WSL_DISTRO="${JIUWENBOX_WSL_DISTRO:-ubuntu-hermes-v2}"
 JIUWENBOX_URL="http://127.0.0.1:${JIUWENBOX_PORT}"
 JIUWENBOX_REPO_URL="${JIUWENBOX_REPO_URL:-https://gitcode.com/openJiuwen/jiuwenswarm}"
+JIUWENBOX_SAVE_LOGS_DIR="${JIUWENBOX_SAVE_LOGS_DIR:-/root/.jiuwenbox/logs}"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -118,7 +119,7 @@ cmd_start() {
         local pid=$!
         echo "$pid" > /tmp/jiuwenbox-server.pid
     else
-        wsl -d "$WSL_DISTRO" -- bash -c "cd ${JIUWENBOX_HOME} && source .venv/bin/activate && setsid sudo .venv/bin/jiuwenbox-server > /tmp/jiuwenbox-server.log 2>&1 & echo \$! > /tmp/jiuwenbox-server.pid && sleep 2"
+        wsl -d "$WSL_DISTRO" -- bash -c "cd ${JIUWENBOX_HOME} && source .venv/bin/activate && sudo mkdir -p '${JIUWENBOX_SAVE_LOGS_DIR}' && setsid sudo .venv/bin/jiuwenbox-server --save-logs '${JIUWENBOX_SAVE_LOGS_DIR}' > /tmp/jiuwenbox-server.log 2>&1 & echo \$! > /tmp/jiuwenbox-server.pid && sleep 2"
     fi
 
     log_info "Waiting for service to be ready..."

@@ -1,0 +1,170 @@
+{
+  "component": {
+    "label": "工作流组件",
+    "java_dir": "component",
+    "python_dir": "component",
+    "output_csv": "localoutput/component-skip用例分析.csv",
+    "defaults": "component"
+  },
+  "agent": {
+    "label": "Agent",
+    "java_dir": "agent",
+    "python_dir": "agent",
+    "output_csv": "localoutput/agent-skip用例分析.csv",
+    "defaults": "generic"
+  },
+  "workflow": {
+    "label": "Workflow",
+    "java_dir": "workflow",
+    "python_dir": "workflow",
+    "output_csv": "localoutput/workflow-skip用例分析.csv",
+    "defaults": "generic"
+  },
+  "workflow_drawable": {
+    "label": "Workflow Drawable",
+    "java_dir": "workflow_drawable",
+    "python_dir": "workflow_drawable",
+    "output_csv": "localoutput/workflow_drawable-skip用例分析.csv",
+    "defaults": "generic"
+  },
+  "tool": {
+    "label": "Tool",
+    "java_dir": "tool",
+    "python_dir": "tool",
+    "output_csv": "localoutput/tool-skip用例分析.csv",
+    "defaults": "generic"
+  },
+  "session": {
+    "label": "Session",
+    "java_dir": "session",
+    "python_dir": "session",
+    "output_csv": "localoutput/session-skip用例分析.csv",
+    "defaults": "generic"
+  },
+  "interrupt_recovery": {
+    "label": "Interrupt Recovery",
+    "java_dir": "interrupt_recovery",
+    "python_dir": "interrupt_recovery",
+    "output_csv": "localoutput/interrupt_recovery-skip用例分析.csv",
+    "defaults": "generic"
+  },
+  "context_engine": {
+    "label": "Context Engine",
+    "java_dir": "context_engine",
+    "python_dir": "context_engine",
+    "output_csv": "localoutput/context_engine-skip用例分析.csv",
+    "defaults": "generic"
+  },
+  "memory_engine": {
+    "label": "Memory Engine",
+    "java_dir": "memory_engine",
+    "python_dir": "memory_engine",
+    "output_csv": "localoutput/memory_engine-skip用例分析.csv",
+    "defaults": "generic"
+  },
+  "graph_memory": {
+    "label": "Graph Memory",
+    "java_dir": "graph_memory",
+    "python_dir": "graph_memory",
+    "output_csv": "localoutput/graph_memory-skip用例分析.csv",
+    "defaults": "generic"
+  },
+  "knowledge_base": {
+    "label": "Knowledge Base",
+    "java_dir": "knowledge_base",
+    "python_dir": "knowledge_base",
+    "output_csv": "localoutput/knowledge_base-skip用例分析.csv",
+    "defaults": "generic"
+  },
+  "database": {
+    "label": "Database",
+    "java_dir": "database",
+    "python_dir": "database",
+    "output_csv": "localoutput/database-skip用例分析.csv",
+    "defaults": "generic"
+  },
+  "client": {
+    "label": "Client",
+    "java_dir": "client",
+    "python_dir": "client",
+    "output_csv": "localoutput/client-skip用例分析.csv",
+    "defaults": "generic"
+  },
+  "claw": {
+    "label": "Claw",
+    "java_dir": "claw",
+    "python_dir": "claw",
+    "output_csv": "localoutput/claw-skip用例分析.csv",
+    "defaults": "generic"
+  },
+  "model_param": {
+    "label": "Model Param",
+    "java_dir": "model_param",
+    "python_dir": "model_param",
+    "output_csv": "localoutput/model_param-skip用例分析.csv",
+    "defaults": "generic"
+  },
+  "prompt": {
+    "label": "Prompt",
+    "java_dir": "prompt",
+    "python_dir": "prompt",
+    "output_csv": "localoutput/prompt-skip用例分析.csv",
+    "defaults": "generic"
+  },
+  "prompt_template": {
+    "label": "Prompt Template",
+    "java_dir": "prompt_template",
+    "python_dir": "prompt_template",
+    "output_csv": "localoutput/prompt_template-skip用例分析.csv",
+    "defaults": "generic"
+  },
+  "prompt_build": {
+    "label": "Prompt Build",
+    "java_dir": "prompt_build",
+    "python_dir": "prompt_build",
+    "output_csv": "localoutput/prompt_build-skip用例分析.csv",
+    "defaults": "generic"
+  },
+  "prompt_badcase": {
+    "label": "Prompt Badcase",
+    "java_dir": "prompt_badcase",
+    "python_dir": "prompt_badcase",
+    "output_csv": "localoutput/prompt_badcase-skip用例分析.csv",
+    "defaults": "generic"
+  },
+  "prompt_feedback_build": {
+    "label": "Prompt Feedback Build",
+    "java_dir": "prompt_feedback_build",
+    "python_dir": "prompt_feedback_build",
+    "output_csv": "localoutput/prompt_feedback_build-skip用例分析.csv",
+    "defaults": "generic"
+  },
+  "real_model": {
+    "label": "Real Model",
+    "java_dir": "real_model",
+    "python_dir": "real_model",
+    "output_csv": "localoutput/real_model-skip用例分析.csv",
+    "defaults": "generic"
+  },
+  "runnner": {
+    "label": "Runner",
+    "java_dir": "runnner",
+    "python_dir": "runnner",
+    "output_csv": "localoutput/runnner-skip用例分析.csv",
+    "defaults": "generic"
+  },
+  "sys_operation": {
+    "label": "Sys Operation",
+    "java_dir": "sys_operation",
+    "python_dir": "sys_operation",
+    "output_csv": "localoutput/sys_operation-skip用例分析.csv",
+    "defaults": "generic"
+  },
+  "task_manager": {
+    "label": "Task Manager",
+    "java_dir": "task_manager",
+    "python_dir": "task_manager",
+    "output_csv": "localoutput/task_manager-skip用例分析.csv",
+    "defaults": "generic"
+  }
+}
