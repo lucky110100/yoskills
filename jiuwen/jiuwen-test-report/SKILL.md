@@ -42,7 +42,7 @@ description: Use when the user asks to run JiuwenTestJava (or openJiuwen Java) t
   export JAVA_HOME="/d/java_install/jdk-17"
   export PATH="$JAVA_HOME/bin:$PATH"
   ```
-- **Python**：需安装 openpyxl。优先使用 `JiuwenTest/.venv/Scripts/python.exe`；如不存在则使用系统 `python`。
+- **Python**：需安装 openpyxl。优先使用 `<PROJECT_ROOT>/.venv/Scripts/python.exe`；如不存在则使用系统 `python`。
 - **Maven**：随系统 PATH
 
 ## 快速用法（如果已跑过测试，只需生成报告）
@@ -56,11 +56,13 @@ description: Use when the user asks to run JiuwenTestJava (or openJiuwen Java) t
 | 配置项 | 说明 | 默认值 |
 |---|---|---|
 | **PROJECT_ROOT** | 项目根目录（所有子项目的父目录） | `D:\jiuwen\main` |
-| **JAVA_HOME** | JDK 17 安装路径（bash 格式，如 `/d/java_install/jdk-17`） | `/d/java_install/jdk-17` |
+| **JAVA_HOME** | JDK 17 安装路径（bash 格式，如 `D:\java\jdk-17.0.2`） | `D:\java\jdk-17.0.2` |
 | **AGENT_CORE_DIR** | agent-core-java 子目录名（相对于 PROJECT_ROOT） | `agent-core-java` |
-| **TEST_DIR** | JiuwenTestJava 测试项目子目录名（相对于 PROJECT_ROOT） | `JiuwenTestJava` |
-| **JIUWEN_TEST_DIR** | JiuwenTest Python 项目子目录名（相对于 PROJECT_ROOT，其 .venv 可借用） | `JiuwenTest` |
-| **PYTHON_VENV** | Python 虚拟环境可执行文件路径 | `<PROJECT_ROOT>/<JIUWEN_TEST_DIR>/.venv/Scripts/python.exe` |
+| **TEST_DIR** | JiuwenTestJava 测试项目子目录名（相对于 PROJECT_ROOT） | `JiuwenTest_3820` |
+| **JIUWEN_TEST_DIR** | JiuwenTest Python 项目子目录名（相对于 PROJECT_ROOT） | `JiuwenTest` |
+| **PYTHON_VENV** | Python 虚拟环境可执行文件路径 | `<PROJECT_ROOT>/.venv/Scripts/python.exe` |
+| **OUTPUT** | 结果输出目录（临时文件、中间文件、报告文件都放在其中） | `<PROJECT_ROOT>/output/<当前日期>` |
+| **CASE_SCOPE** | 用例范围：`smoke` 只跑冒烟用例，`all` 跑所有用例 | `smoke` |
 
 **确认流程**：将上述配置项以 multiSelect=false 的方式分批提问（每批最多 4 项），用户确认后方进入 Step 0。如果用户选择"Other"自定义值，则使用用户提供的值覆盖默认值。
 
@@ -79,7 +81,9 @@ set PROJECT_ROOT=<用户确认的值>
 同时在脚本 `generate_test_report.py` 中修改：
 ```python
 PROJECT_ROOT = Path(r'<用户确认的 PROJECT_ROOT>')
-SUREFIRE_DIR = PROJECT_ROOT / '<用户确认的 TEST_DIR>' / 'target' / 'surefire-reports'
+TEST_DIR = '<用户确认的 TEST_DIR>'
+OUTPUT = Path(r'<用户确认的 OUTPUT>')
+CASE_SCOPE = '<用户确认的 CASE_SCOPE>'
 ```
 
 ### Step 1 — 安装 agent-core-java（跳过测试）
@@ -97,38 +101,56 @@ export JAVA_HOME="/d/java_install/jdk-17" && export PATH="$JAVA_HOME/bin:$PATH" 
 
 ### Step 2 — 在 JiuwenTestJava 跑 mvn test
 
+根据 **CASE_SCOPE** 配置项决定执行的 mvn 命令：
+
+**如果 CASE_SCOPE = smoke（冒烟用例）**：
 ```bash
 export JAVA_HOME="/d/java_install/jdk-17" && export PATH="$JAVA_HOME/bin:$PATH" \
-  && cd "$PROJECT_ROOT/JiuwenTestJava" \
+  && cd "$PROJECT_ROOT/<TEST_DIR>" \
+  && rm -rf target/surefire-reports \
+  && mvn clean test -Dgroups=smoke
+```
+
+**如果 CASE_SCOPE = all（所有用例）**：
+```bash
+export JAVA_HOME="/d/java_install/jdk-17" && export PATH="$JAVA_HOME/bin:$PATH" \
+  && cd "$PROJECT_ROOT/<TEST_DIR>" \
   && rm -rf target/surefire-reports \
   && mvn test
 ```
 
-后台跑（耗时 5–15 分钟）。`mvn test` 退出码为 1 是正常的（有失败用例），关键看 `target/surefire-reports/TEST-*.xml` 是否产出。
+后台跑（smoke 耗时 3–5 分钟，all 耗时 5–15 分钟）。`mvn test` 退出码为 1 是正常的（有失败用例），关键看 `target/surefire-reports/TEST-*.xml` 是否产出。
 
 ### Step 3 — 调用解析脚本生成 Excel
 
-把 skills 目录下的 `generate_test_report.py` **复制**（不要硬链接）到 `$PROJECT_ROOT/JiuwenTestJava/generate_test_report.py`。**复制后编辑脚本顶部的配置变量**：
+先创建 OUTPUT 目录（如不存在）：
+```bash
+mkdir -p "<用户确认的 OUTPUT>"
+```
+
+把 skills 目录下的 `generate_test_report.py` **复制**（不要硬链接）到 OUTPUT 目录。**复制后编辑脚本顶部的配置变量**：
 
 ```python
-# 修改为实际项目根目录
-PROJECT_ROOT = r"D:\jiuwen\main"   # 根据实际目录修改
+PROJECT_ROOT = r"<用户确认的 PROJECT_ROOT>"
+TEST_DIR = "<用户确认的 TEST_DIR>"
+OUTPUT = r"<用户确认的 OUTPUT>"
+CASE_SCOPE = "<用户确认的 CASE_SCOPE>"
 ```
 
 然后运行：
 
 ```bash
-cd "$PROJECT_ROOT/JiuwenTestJava" \
+cd "<用户确认的 OUTPUT>" \
   && python generate_test_report.py
 ```
 
 或使用已有的 Python 虚拟环境：
 
 ```bash
-"$PROJECT_ROOT/JiuwenTest/.venv/Scripts/python.exe" "$PROJECT_ROOT/JiuwenTestJava/generate_test_report.py"
+"<PYTHON_VENV>" "<用户确认的 OUTPUT>/generate_test_report.py"
 ```
 
-输出：`<PROJECT_ROOT>/JiuwenTestJava/test_results_<日期>.xlsx`
+输出：`<OUTPUT>/test_results_<日期>.xlsx`
 
 ### Step 4 — 校验并向用户汇报
 

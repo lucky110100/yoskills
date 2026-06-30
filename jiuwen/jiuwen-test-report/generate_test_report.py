@@ -7,8 +7,11 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 
 PROJECT_ROOT = Path(os.environ.get('PROJECT_ROOT', r'D:\jiuwen\main'))
 TEST_DIR = os.environ.get('TEST_DIR', 'JiuwenTestJava')
+CASE_SCOPE = os.environ.get('CASE_SCOPE', 'smoke')
+OUTPUT = Path(os.environ.get('OUTPUT', str(PROJECT_ROOT / 'output' / datetime.now().strftime('%Y%m%d'))))
 SUREFIRE_DIR = PROJECT_ROOT / TEST_DIR / 'target' / 'surefire-reports'
-OUTPUT_FILE = PROJECT_ROOT / TEST_DIR / ('test_results_' + datetime.now().strftime('%Y%m%d_%H%M%S') + '.xlsx')
+OUTPUT.mkdir(parents=True, exist_ok=True)
+OUTPUT_FILE = OUTPUT / ('test_results_' + datetime.now().strftime('%Y%m%d_%H%M%S') + '.xlsx')
 
 # ------ Priority keywords (case-insensitive match) ------
 P1_KEYWORDS = ['python contract', 'fake-green guard', 'blocked sdk parity', 'sdk not implemented', 'parity gap', 'unsupportedoperationexception', 'noclassdeffounderror', 'not yet implemented']
