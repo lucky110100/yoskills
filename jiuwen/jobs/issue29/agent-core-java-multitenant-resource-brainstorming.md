@@ -1,8 +1,9 @@
-# agent-core-java 多租户资源管理 Brainstorming 分析
+# agent-core-java 多租户资源管理 Brainstorming 分析（已核对版）
 
 > 分析日期：2026-07-16
 > 项目：agent-core-java
 > 范围：多租户资源管理功能，涵盖租户定义、资源界定、生命周期、存储路径、存储介质、Skill 同步
+> 核对状态：已与业务方逐章核对确认
 
 ---
 
@@ -20,37 +21,12 @@ public class TenantContext {
 }
 ```
 
-**关键设计决策：`tenantId` 是业务方定义的「不透明标识符」**——框架不赋予任何业务语义，不关心它代表的是个人、部门、组织还是其他维度。
+### 1.2 核对结论
 
-### 1.2 Brainstorming 分析
-
-| 租户类型 | 说明 | 当前支持度 | 建议 |
-|---------|------|-----------|------|
-| **个人（Personal）** | 单用户隔离场景，tenantId = userId | 支持 | 直接使用，无需改动 |
-| **部门/团队（Department/Team）** | 组织架构下的部门级隔离，tenantId = deptId | 支持 | 需注意：部门下可能有多个用户共享同一 tenantId，需在 extensions 中传入 userId 做二次区分 |
-| **组织/企业（Organization）** | 企业级隔离，tenantId = orgId | 支持 | 同上，extensions 可传入 deptId/userId |
-| **项目（Project）** | 项目级隔离，tenantId = projectId | 支持 | 适合临时性协作场景 |
-| **混合层级** | 如 组织 > 部门 > 个人的层级隔离 | **不完全支持** | 当前仅平面隔离，无层级关系 |
-
-**核心问题：当前是平面租户模型，不支持层级租户。**
-
-建议增强方向：
-
-1. **方案A：保持平面模型 + extensions 辅助**
-   - 不改变 TenantContext 核心结构
-   - 业务方在 extensions 中传入层级信息（如 `parentTenantId`、`tenantType`）
-   - 框架侧增加按层级查找的便捷方法
-   - 优点：改动最小，向后兼容
-   - 缺点：层级查询需要业务方自行维护
-
-2. **方案B：引入 TenantHierarchy**
-   - `TenantContext` 增加 `parentTenantId` 字段
-   - `TenantWorkspaceResolver` 支持层级路径解析（如 `org1/dept1/user1/`）
-   - Skill 查找支持继承链（先查自己 → 再查父租户 → 再查公共）
-   - 优点：原生支持层级
-   - 缺点：改动大，需要处理路径深度、权限继承等复杂问题
-
-**推荐方案A**，原因：当前设计已明确声明 tenantId 是不透明标识符，层级语义应由业务方在 extensions 中自行管理。框架只负责按 tenantId 做数据空间隔离，这是正确的关注点分离。
+- **租户是抽象概念，粒度完全由业务方决定**。可以是个人、部门、组织、项目或其他业务维度。
+- **保持平面模型**，不引入层级租户（TenantHierarchy）。
+- **不需要 extensions 辅助层级**。`extensions` 字段保留，仅用于传递业务元数据（如 region 等），不用于表达租户层级关系。
+- `tenantId` 是业务方定义的**不透明标识符**，框架不赋予任何业务语义，只负责按 `tenantId` 做数据空间隔离。
 
 ---
 
@@ -66,7 +42,7 @@ public class TenantContext {
 | **Checkpoints** | `TenantWorkspaceResolver.resolveCheckpointDir()` | 文件系统路径隔离 + KV key 前缀 | 是，session 级别 |
 | **Team Memory** | `WorkspaceType.TEAM_MEMORY` | 文件系统路径隔离 | 是，团队共享记忆目录 |
 | **Session State (KV)** | `TenantKVStoreKeyResolver` | KV key 前缀（`tenantId:rawKey`） | 是，sessionId 前缀 |
-| **LongTermMemory** | `TenantKVStoreKeyResolver` | KV key 前缀 | 是 |
+| **LongTermMemory** -- | `TenantKVStoreKeyResolver` | KV key 前缀 | 是 |
 | **用户记忆/变量** | `TenantKVStoreKeyResolver` | KV key 前缀 | 是 |
 
 ### 2.2 当前已明确**不隔离**的资源
@@ -78,22 +54,18 @@ public class TenantContext {
 | ResourceMgr 资源池 | 工具、Workflow、Prompt、Model 等是系统级 |
 | MessageQueue | 全局消息 |
 | CallbackFramework | 全局回调 |
+| MCP Server 配置 | 系统级，不隔离 |
+| Prompt 模板 | 系统级，不隔离 |
+| Model 配置 | 系统级，不隔离 |
 
-### 2.3 Brainstorming：是否还有其他属于租户的资源？
+### 2.3 核对结论：需显式隔离的资源
 
-| 资源 | 分析 | 是否应由租户管理 | 建议 |
-|------|------|-----------------|------|
-| **Todo** | 当前 `FileTodoStorage` 存储在 `workspace/.todo/{sessionId}/todo.json` | **是**（已间接隔离） | Todo 依赖 workspace 路径，workspace 已隔离则 Todo 已隔离。但 TodoStorage 接口没有显式租户感知，建议增加 TenantAwareTodoStorage |
-| **Session Store (FileStore)** | `FileStore` 持久化到 `session_store.json` | **是**（已间接隔离） | 依赖 workspace 路径，但 FileStore 路径硬编码为相对路径，需确认是否在租户 workspace 内 |
-| **Graph Store** | `InMemoryStore` / `PersistenceGraphStore` | **是**（KV 层已隔离） | PersistenceGraphStore 使用 TenantKVStoreKeyResolver，已隔离 |
-| **Vector Store** | Milvus/Chroma/PGVector/Elasticsearch | **未完全隔离** | 文档明确标注"VectorStore 集合名的 tenantId 前缀改造尚未完成"。建议按 `tenantId_collectionName` 格式隔离 |
-| **DB Store** | `BaseDbStore`（MessageManager/ScopeUserMappingManager） | **未完全隔离** | 文档明确标注"SQL 层的 tenant_id 列改造尚未完成"。建议增加 tenant_id 列 + WHERE 条件 |
-| **分布式锁** | `_lock/lockName` | **是**（KV 层已隔离） | 已通过 TenantKVStoreKeyResolver 前缀隔离 |
-| **Object Storage** | S3/OBS/HDFS 上的文件 | **是**（路径层已隔离） | ObjectStorageWorkspaceStore 的 resolvePath 已包含 namespace/tenantId |
-| **Team Workspace** | `TeamWorkspaceManager` | **部分隔离** | TeamWorkspace 有自己的 rootPath 配置，需确认是否在租户 workspace 下 |
-| **MCP Server 配置** | 运行时连接的外部服务 | **视情况** | 如果不同租户连接不同 MCP Server，则需隔离配置 |
-| **Prompt 模板** | 系统级 prompt | **视情况** | 如果租户有自定义 prompt 需求，则需隔离 |
-| **Model 配置** | 模型选择偏好 | **视情况** | 如果不同租户使用不同模型或配额，则需隔离 |
+| 资源 | 当前状态 | 要求 |
+|------|---------|------|
+| **Todo** | 间接隔离（依赖 workspace 路径） | **需显式租户感知**，不能仅依赖间接隔离 |
+| **FileStore (Session)** | 间接隔离（依赖 workspace 路径） | **需显式租户感知** |
+| **Vector Store** | 未隔离 | P2 阶段完成 tenantId 前缀隔离 |
+| **DB Store** | 未隔离 | P2 阶段完成 tenant_id 列改造，记忆用 |
 
 ### 2.4 资源分类总结
 
@@ -115,387 +87,522 @@ public class TenantContext {
 │   ├── User Memory（用户记忆/变量）
 │   └── Distributed Lock（分布式锁）
 │
-├── 关系数据库类（未隔离 ✗）
+├── 关系数据库类（未隔离 ✗ → P2）
 │   ├── MessageManager
 │   └── ScopeUserMappingManager
 │
-├── 向量数据库类（未隔离 ✗）
+├── 向量数据库类（未隔离 ✗ → P2）
 │   └── VectorStore 集合
 │
-└── 间接隔离（依赖 Workspace 路径）
-    ├── Todo（通过 workspace 路径间接隔离）
-    └── FileStore（通过 workspace 路径间接隔离）
+└── 需显式隔离（当前间接隔离 → P1）
+    ├── Todo（需 TenantAware 机制）
+    └── FileStore（需 TenantAware 机制）
 ```
 
 ---
 
 ## 三、各资源的生命周期管理
 
-### 3.1 当前生命周期管理现状
+### 3.1 核对结论
 
-| 资源 | 创建时机 | 销毁时机 | 管理方式 | 当前问题 |
-|------|---------|---------|---------|---------|
-| **TenantContext** | 请求入口 `TenantContextHolder.setCurrentTenant()` | 请求结束 `clearCurrentTenant()` | InheritableThreadLocal | 无显式租户注册/注销流程 |
-| **Workspace** | `initializeTenantSpace()` 幂等创建 | **无销毁机制** | ConcurrentHashMap 缓存 + Files.createDirectories | 租户删除后残留目录 |
-| **Skills** | 首次访问时自动创建目录 | **无销毁机制** | SkillManager + refreshIncrementally | 无租户 Skill 清理逻辑 |
-| **Tmp** | `initializeTenantSpace()` 创建 | **无清理机制** | 无 | 临时文件可能无限增长 |
-| **Checkpoints** | Session 创建时 | Session 正常完成时 `release()` | Checkpointer lifecycle hooks | 异常中断时可能残留 |
-| **Session State (KV)** | 首次写入时 | `release(sessionId)` 删除前缀 | KVStore key lifecycle | 需要业务方主动调用 release |
-| **Team Memory** | 团队创建时 | **无销毁机制** | TeamLifecycle 枚举 | CREATED/RUNNING/PAUSED/COMPLETED 无自动清理 |
-| **Todo** | 任务创建时 | 任务完成/取消时 | FileTodoStorage | 依赖 sessionId，session 释放后文件残留 |
-| **Vector Store** | 首次写入时 | **无销毁机制** | 无 | 租户删除后向量数据残留 |
+- **不需要 TenantLifecycleManager**，租户的创建/注销由业务方自行负责，框架只做数据空间隔离。
+- **Tmp 需要 TTL 清理机制**，超过一定时间未访问的临时文件自动清理。
+- **其他资源需提供清理方法和接口**，但不由本服务触发，上层业务方自行决定何时调用。
+- 文档需明确各资源在本服务中的生命周期处理方式。
 
-### 3.2 Brainstorming：生命周期管理增强建议
+### 3.2 各资源生命周期处理方式
 
-#### 3.2.1 租户生命周期
+| 资源 | 创建时机 | 销毁/清理方式 | 本服务处理方式 |
+|------|---------|-------------|--------------|
+| **TenantContext** | 请求入口 `setCurrentTenant()` | 请求结束 `clearCurrentTenant()` | InheritableThreadLocal 传播，请求结束自动清理 |
+| **Workspace** | `initializeTenantSpace()` 幂等创建 | 提供清理接口，业务方调用 | 创建：自动；清理：提供 `cleanupTenantSpace(tenantId)` 方法 |
+| **Skills** | 首次访问时自动创建目录 | 提供清理接口，业务方调用 | 创建：自动；清理：提供 `cleanupSkillRoot(tenantId)` 方法 |
+| **Tmp** | `initializeTenantSpace()` 创建 | **TTL 自动清理** | 创建：自动；清理：TTL 定时扫描（默认 24h），提供可配置 TTL |
+| **Checkpoints** | Session 创建时 | Session 完成时 `release()` | 创建：随 session 自动；清理：session 正常完成时自动 release |
+| **Session State (KV)** | 首次写入时 | `release(sessionId)` | 创建：随 session 自动；清理：需业务方主动调用 release |
+| **Team Memory** | 团队创建时 | 提供清理接口，业务方调用 | 创建：自动；清理：提供 `cleanupTeamMemory(tenantId, teamId)` 方法 |
+| **Todo** | 任务创建时 | Session 结束时残留 | 创建：随任务自动；清理：提供 `cleanupTodo(tenantId, sessionId)` 方法 |
+| **Vector Store** | 首次写入时 | 提供清理接口，业务方调用 | P2 阶段实现 |
+| **DB Store** | 首次写入时 | 提供清理接口，业务方调用 | P2 阶段实现 |
 
-当前**缺少租户级别的生命周期管理**。建议引入：
+### 3.3 清理接口设计
 
 ```java
-public enum TenantLifecycle {
-    PROVISIONING,   // 资源分配中
-    ACTIVE,         // 正常使用
-    SUSPENDED,      // 暂停（保留数据，禁止访问）
-    DEPROVISIONING, // 资源回收中
-    DELETED         // 已删除
-}
-
-public interface TenantLifecycleManager {
-    TenantContext provision(String tenantId, Map<String, String> extensions);
-    void suspend(String tenantId);
-    void reactivate(String tenantId);
-    void deprovision(String tenantId, boolean purgeData);
-    TenantLifecycle getStatus(String tenantId);
+public interface TenantResourceCleaner {
+    void cleanupWorkspace(String tenantId);
+    void cleanupSkills(String tenantId);
+    void cleanupCheckpoints(String tenantId, String sessionId);
+    void cleanupTeamMemory(String tenantId, String teamId);
+    void cleanupTodo(String tenantId, String sessionId);
+    void cleanupAll(String tenantId);
 }
 ```
 
-#### 3.2.2 资源生命周期分层
+### 3.4 Tmp TTL 清理机制
 
+```java
+public class TmpFileCleaner {
+    private final Duration ttl;  // 默认 24h
+    private final ScheduledExecutorService scheduler;
+    
+    public void start() {
+        scheduler.scheduleAtFixedRate(this::scanAndClean, 1, 1, TimeUnit.HOURS);
+    }
+    
+    private void scanAndClean() {
+        // 1. 扫描默认 tmp 目录
+        // 2. 扫描各租户 tmp 目录
+        // 3. 删除 lastModified 超过 TTL 的文件
+    }
+}
 ```
-租户生命周期
-  └── 控制所有租户资源的创建和销毁
-       ├── Workspace 生命周期（租户级：随租户创建/销毁）
-       ├── Skill 生命周期（租户级：随租户创建/销毁，热加载独立）
-       ├── Tmp 生命周期（会话级：随会话创建/定期清理）
-       ├── Checkpoint 生命周期（会话级：随会话创建/完成时清理）
-       ├── Session State 生命周期（会话级：随会话创建/释放时清理）
-       ├── Team Memory 生命周期（团队级：随团队创建/归档时清理）
-       └── Todo 生命周期（任务级：随任务创建/完成时清理）
-```
-
-#### 3.2.3 资源清理策略
-
-| 资源 | 清理触发 | 清理方式 | 保留策略 |
-|------|---------|---------|---------|
-| Workspace | 租户注销 | 递归删除目录 | 可选：归档到对象存储 |
-| Skills | 租户注销 | 删除租户 Skill 目录 | 必须保留公共 Skill |
-| Tmp | 定时任务 / Session 结束 | 删除超过 TTL 的文件 | TTL 可配置（默认 24h） |
-| Checkpoints | Session 正常完成 | 已有 `release()` | 无需保留 |
-| Session State | Session 结束 | 已有 `release()` | 无需保留 |
-| Team Memory | 团队归档 | 压缩归档 | 归档到对象存储 |
-| Vector Data | 租户注销 | 删除集合/命名空间 | 可选：归档 |
 
 ---
 
 ## 四、存储路径层级结构与向后兼容性
 
-### 4.1 当前实际路径结构
+### 4.1 当前路径问题
 
-根据 `TenantWorkspaceResolver` 和 `TenantNamespaceFactories.PATH_DEFAULT` 的实现：
+当前实际路径存在 **tenantId 重复** bug：
 
-**PATH_DEFAULT 命名空间逻辑：**
+```
+baseWorkspacePath/{tenantId}/tenants/{tenantId}/workspace
+                      ^^^^^^^^              ^^^^^^^^
+                      重复！                  重复！
+```
+
+原因：
+- `PATH_DEFAULT.namespace(ctx, "tenants")` 产出 `{tenantId}/tenants`
+- `resolvePath(namespace, tenantId, subDir)` 再次拼入 `tenantId`
+
+### 4.2 核对确认的目标路径结构
+
+**无租户场景：**
+
+```
+baseWorkspacePath/                     # ← 这就是 workspace
+├── tmp/                               # 默认临时目录
+├── skills/                            # 默认 Skill（公共 Skill）
+├── checkpoints/                       # 默认检查点
+├── team_memory/                       # 默认团队记忆
+```
+
+**有租户场景：**
+
+```
+baseWorkspacePath/
+├── tmp/                               # 默认（无租户）
+├── skills/                            # 默认（无租户，即公共 Skill）
+├── checkpoints/                       # 默认（无租户）
+├── team_memory/                       # 默认（无租户）
+├── tenants/
+│   ├── {tenantId_1}/                  # ← 这就是租户1的 workspace
+│   │   ├── skills/
+│   │   ├── tmp/
+│   │   ├── checkpoints/
+│   │   ├── team_memory/
+│   │   └── todo/
+│   ├── {tenantId_2}/                  # ← 这就是租户2的 workspace
+│   │   ├── skills/
+│   │   ├── tmp/
+│   │   ├── checkpoints/
+│   │   ├── team_memory/
+│   │   └── todo/
+```
+
+**关键设计决策：**
+- `tenants/{tenantId}/` **就是**该租户的 workspace 目录
+- workspace 与其他租户资源（skills/tmp/checkpoints 等）**不是平级关系**，而是 `tenants/{tenantId}/` 本身就是 workspace，其他资源挂在其下
+- 无租户时 `baseWorkspacePath` 直接作为根，完全向后兼容
+- **不需要兼容旧路径**，可直接修改
+
+### 4.3 实现调整方案
+
+#### 4.3.1 修改 TenantWorkspaceResolver
+
 ```java
-(ctx, rawKey) -> {
-    if (ctx != null && ctx.isTenantAware()) {
-        return ctx.safeTenantId() + "/" + rawKey;  // 例如 "dept_fin_03/tenants"
+public class TenantWorkspaceResolver {
+    private final String baseWorkspacePath;
+    
+    // resolveWorkspaceRoot：tenants/{tenantId}/ 即 workspace
+    public Path resolveWorkspaceRoot(TenantContext ctx) {
+        if (!ctx.isTenantAware()) {
+            return Path.of(baseWorkspacePath).toAbsolutePath().normalize();
+        }
+        return Path.of(baseWorkspacePath, "tenants", ctx.safeTenantId())
+                   .toAbsolutePath().normalize();
     }
-    return rawKey;  // 例如 "tenants"
+    
+    // resolveSkillRoot：tenants/{tenantId}/skills/
+    public Path resolveSkillRoot(TenantContext ctx) {
+        if (!ctx.isTenantAware()) {
+            return Path.of(baseWorkspacePath, "skills").toAbsolutePath().normalize();
+        }
+        return Path.of(baseWorkspacePath, "tenants", ctx.safeTenantId(), "skills")
+                   .toAbsolutePath().normalize();
+    }
+    
+    // resolveTempDir：tenants/{tenantId}/tmp/
+    public Path resolveTempDir(TenantContext ctx) {
+        if (!ctx.isTenantAware()) {
+            return Path.of(baseWorkspacePath, "tmp").toAbsolutePath().normalize();
+        }
+        return Path.of(baseWorkspacePath, "tenants", ctx.safeTenantId(), "tmp")
+                   .toAbsolutePath().normalize();
+    }
+    
+    // resolveCheckpointDir：tenants/{tenantId}/checkpoints/
+    public Path resolveCheckpointDir(TenantContext ctx) {
+        if (!ctx.isTenantAware()) {
+            return Path.of(baseWorkspacePath, "checkpoints").toAbsolutePath().normalize();
+        }
+        return Path.of(baseWorkspacePath, "tenants", ctx.safeTenantId(), "checkpoints")
+                   .toAbsolutePath().normalize();
+    }
+    
+    // resolveTeamMemoryDir：tenants/{tenantId}/team_memory/
+    public Path resolveTeamMemoryDir(TenantContext ctx) {
+        if (!ctx.isTenantAware()) {
+            return Path.of(baseWorkspacePath, "team_memory").toAbsolutePath().normalize();
+        }
+        return Path.of(baseWorkspacePath, "tenants", ctx.safeTenantId(), "team_memory")
+                   .toAbsolutePath().normalize();
+    }
+    
+    // initializeTenantSpace：幂等创建租户目录结构
+    public Path initializeTenantSpace(TenantContext ctx) {
+        if (!ctx.isTenantAware()) {
+            return Path.of(baseWorkspacePath);
+        }
+        return initializedTenants.computeIfAbsent(ctx.safeTenantId(), tid -> {
+            Path root = Path.of(baseWorkspacePath, "tenants", tid);
+            try {
+                Files.createDirectories(root);                               // workspace = root
+                Files.createDirectories(root.resolve("skills"));
+                Files.createDirectories(root.resolve("tmp"));
+                Files.createDirectories(root.resolve("checkpoints"));
+                Files.createDirectories(root.resolve("team_memory"));
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to initialize tenant space: " + tid, e);
+            }
+            return root;
+        });
+    }
 }
 ```
 
-**实际路径解析：**
-```java
-// tenantNamespace(ctx) = PATH_DEFAULT.namespace(ctx, "tenants")
-// 当 isTenantAware 时: tenantId + "/tenants" = "dept_fin_03/tenants"
-
-// resolveWorkspaceRoot:
-Path.of(baseWorkspacePath, "dept_fin_03/tenants", "dept_fin_03", "workspace")
-// = baseWorkspacePath/dept_fin_03/tenants/dept_fin_03/workspace
-```
-
-因此当前实际目录结构为：
-
-```
-baseWorkspacePath/
-├── tmp/                                    # 默认临时目录
-├── workspace/                              # 默认工作目录
-├── skills/                                 # 默认 Skill
-├── checkpoints/                            # 默认检查点
-├── team_memory/                            # 默认团队记忆
-├── dept_fin_03/                            # ← tenantId 目录
-│   └── tenants/                            # ← namespace 层
-│       └── dept_fin_03/                    # ← 重复的 tenantId！
-│           ├── workspace/
-│           ├── skills/
-│           ├── tmp/
-│           ├── checkpoints/
-│           └── team_memory/
-```
-
-### 4.2 问题分析：tenantId 重复
-
-当前路径 `baseWorkspacePath/{tenantId}/tenants/{tenantId}/workspace` 存在 **tenantId 重复**问题：
-
-- 第一层 `{tenantId}/` 来自 `PATH_DEFAULT.namespace(ctx, "tenants")` = `tenantId/tenants`
-- 第二层 `{tenantId}` 来自 `resolvePath(namespace, tenantId, subDir)` 中的 `tenantId` 参数
-
-这导致路径中出现两次 tenantId，不够简洁。
-
-### 4.3 用户提议的层级结构
-
-```
-baseWorkspacePath/
-├── tmp/                          # 默认临时目录（无租户时使用）
-├── sessions/                     # 默认 sessions（无租户时使用）
-├── skills/                       # 默认 skill（无租户时使用）
-├── tenants/
-│   ├── {tenantId_1}/             # 租户1（tenantId 由业务方定义）
-│   │   ├── skills/
-│   │   ├── tmp/
-│   │   └── sessions/
-│   ├── {tenantId_2}/             # 租户2
-│   │   ├── skills/
-│   │   ├── tmp/
-│   │   └── sessions/
-```
-
-### 4.4 建议的优化层级结构
-
-综合当前实现和用户提议，建议调整为：
-
-```
-baseWorkspacePath/
-├── workspace/                    # 默认工作目录（无租户时使用）
-├── skills/                       # 默认 Skill（无租户时使用，即公共 Skill）
-├── tmp/                          # 默认临时目录（无租户时使用）
-├── checkpoints/                  # 默认检查点（无租户时使用）
-├── team_memory/                  # 默认团队记忆（无租户时使用）
-├── tenants/
-│   ├── {tenantId_1}/
-│   │   ├── workspace/
-│   │   ├── skills/
-│   │   ├── tmp/
-│   │   ├── checkpoints/
-│   │   ├── team_memory/
-│   │   └── todo/
-│   ├── {tenantId_2}/
-│   │   ├── workspace/
-│   │   ├── skills/
-│   │   ├── tmp/
-│   │   ├── checkpoints/
-│   │   ├── team_memory/
-│   │   └── todo/
-```
-
-### 4.5 实现调整方案
-
-需要修改 `TenantNamespaceFactories.PATH_DEFAULT`：
+#### 4.3.2 修改 TenantNamespaceFactories.PATH_DEFAULT
 
 ```java
-// 当前（有重复）：
-public static final TenantNamespaceFactory PATH_DEFAULT =
-    (ctx, rawKey) -> {
-        if (ctx != null && ctx.isTenantAware()) {
-            return ctx.safeTenantId() + "/" + rawKey;
-        }
-        return rawKey;
-    };
-
-// 建议修改为：
+// 修改后：
 public static final TenantNamespaceFactory PATH_DEFAULT =
     (ctx, rawKey) -> {
         if (ctx != null && ctx.isTenantAware()) {
             return "tenants/" + ctx.safeTenantId();
-            // rawKey（"tenants"）不再参与路径拼接
         }
-        return rawKey;  // 无租户时返回 "tenants"，但不会走到 tenants 分支
+        return "";  // 无租户时返回空字符串
     };
 ```
 
-同时需要修改 `TenantWorkspaceResolver`，去掉 `tenantNamespace()` 中间层：
+#### 4.3.3 修改 WorkspaceType
 
 ```java
-// 当前：
-private String tenantNamespace(TenantContext ctx) {
-    return namespaceFactory.namespace(ctx, "tenants");
-}
-public Path resolveWorkspaceRoot(TenantContext ctx) {
-    String ns = tenantNamespace(ctx);
-    return Path.of(baseWorkspacePath, ns, ctx.safeTenantId(), "workspace");
-    // 结果: baseWorkspacePath/dept_fin_03/tenants/dept_fin_03/workspace ← 重复
-}
-
-// 建议修改为：
-private String tenantBasePath(TenantContext ctx) {
-    return namespaceFactory.namespace(ctx, "");
-    // 有租户时返回 "tenants/{tenantId}"
-    // 无租户时返回 "" (空字符串，即 baseWorkspacePath 本身)
-}
-public Path resolveWorkspaceRoot(TenantContext ctx) {
-    if (!ctx.isTenantAware()) {
-        return Path.of(baseWorkspacePath, "workspace");
-    }
-    String base = tenantBasePath(ctx);
-    return Path.of(baseWorkspacePath, base, "workspace").toAbsolutePath().normalize();
-    // 结果: baseWorkspacePath/tenants/dept_fin_03/workspace ← 无重复
+public enum WorkspaceType {
+    WORKSPACE(""),              // tenants/{tenantId}/ 即 workspace
+    SKILLS("skills"),
+    TMP("tmp"),
+    CHECKPOINTS("checkpoints"),
+    TEAM_MEMORY("team_memory"),
+    TODO("todo");
+    
+    private final String subDirectory;
+    
+    WorkspaceType(String subDirectory) { this.subDirectory = subDirectory; }
+    
+    public String subDirectory() { return subDirectory; }
 }
 ```
 
-### 4.6 向后兼容性分析
-
-| 场景 | 当前行为 | 修改后行为 | 是否兼容 |
-|------|---------|-----------|---------|
-| 不传 TenantContext | 路径 = `baseWorkspacePath/` | 路径 = `baseWorkspacePath/workspace/` | ⚠️ 不兼容！workspace 子目录变化 |
-| tenantId 为 null | 同上 | 同上 | ⚠️ 同上 |
-| enableTenantIsolation = false | 同上 | 同上 | ⚠️ 同上 |
-| 有租户 | `baseWorkspacePath/{tid}/tenants/{tid}/workspace` | `baseWorkspacePath/tenants/{tid}/workspace` | ⚠️ 路径变化，数据需迁移 |
-
-**兼容性问题：**
-
-1. **无租户场景**：当前 `resolveWorkspaceRoot()` 在无租户时返回 `baseWorkspacePath` 本身，如果修改为 `baseWorkspacePath/workspace/`，则所有已有代码依赖 `baseWorkspacePath` 作为工作目录的地方都会断裂。
-
-2. **有租户场景**：路径从 `{tid}/tenants/{tid}/` 变为 `tenants/{tid}/`，需要数据迁移。
-
-**向后兼容方案：**
+#### 4.3.4 修改 LocalWorkspaceStore
 
 ```java
-// 方案：通过配置开关控制路径策略
-public enum PathStrategy {
-    LEGACY,     // 当前路径策略（{tid}/tenants/{tid}/...）
-    FLAT,       // 新路径策略（tenants/{tid}/...）
-    UNIFIED     // 统一路径策略（见下文）
-}
-
-// TenantWorkspaceResolver 增加策略选择
-public Path resolveWorkspaceRoot(TenantContext ctx) {
-    if (!ctx.isTenantAware()) {
-        switch (pathStrategy) {
-            case LEGACY:  return Path.of(baseWorkspacePath);
-            case FLAT:    return Path.of(baseWorkspacePath);
-            case UNIFIED: return Path.of(baseWorkspacePath, "workspace");
+public class LocalWorkspaceStore implements WorkspaceStore {
+    private final String basePath;
+    
+    @Override
+    public Path resolvePath(String namespace, String tenantId, String subDirectory) {
+        if (subDirectory == null || subDirectory.isEmpty()) {
+            // WORKSPACE 类型：namespace 本身就是 tenants/{tenantId}
+            return Path.of(basePath, namespace).toAbsolutePath().normalize();
+        }
+        return Path.of(basePath, namespace, subDirectory).toAbsolutePath().normalize();
+    }
+    
+    @Override
+    public Path resolveDefaultPath(String subDirectory) {
+        if (subDirectory == null || subDirectory.isEmpty()) {
+            return Path.of(basePath).toAbsolutePath().normalize();
+        }
+        return Path.of(basePath, subDirectory).toAbsolutePath().normalize();
+    }
+    
+    @Override
+    public void createDirectories(String namespace, String tenantId) {
+        Path root = Path.of(basePath, namespace);
+        try {
+            Files.createDirectories(root);  // workspace
+            for (String subDir : new String[]{"skills", "tmp", "checkpoints", "team_memory", "todo"}) {
+                Files.createDirectories(root.resolve(subDir));
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create tenant directories", e);
         }
     }
-    switch (pathStrategy) {
-        case LEGACY:  return Path.of(baseWorkspacePath, ns, ctx.safeTenantId(), "workspace");
-        case FLAT:    return Path.of(baseWorkspacePath, "tenants", ctx.safeTenantId(), "workspace");
-        case UNIFIED: return Path.of(baseWorkspacePath, "tenants", ctx.safeTenantId(), "workspace");
-    }
 }
 ```
-
-**推荐做法：**
-
-- 无租户场景保持现有行为（`baseWorkspacePath` 直接作为根），确保完全向后兼容
-- 有租户场景改为 `baseWorkspacePath/tenants/{tenantId}/...`，去掉重复 tenantId
-- 提供迁移工具脚本，将旧路径数据迁移到新路径
 
 ---
 
 ## 五、存储介质分析
 
-### 5.1 当前各资源的存储介质
+### 5.1 核对结论
 
-| 资源 | 当前存储介质 | 是否可配置 | SPI 支持 |
-|------|------------|-----------|---------|
-| **Workspace 文件** | 本地文件系统 | 是（TieredWorkspaceManager） | WorkspaceStore SPI |
-| **Skills 文件** | 本地文件系统 | 是（同上） | 同上 |
-| **Tmp 文件** | 本地文件系统 | 是（同上） | 同上 |
-| **Checkpoints 文件** | 本地文件系统 | 是（同上） | 同上 |
-| **Team Memory 文件** | 本地文件系统 | 是（同上） | 同上 |
-| **Session State** | InMemory / KV Store | 是（CheckpointerFactory SPI） | CheckpointerProvider SPI |
-| **Agent State** | InMemory / KV Store | 是 | 同上 |
-| **Workflow State** | InMemory / KV Store | 是 | 同上 |
-| **Graph State** | InMemory / KV Store | 是 | 同上 |
-| **KV Store 后端** | InMemory / Redis | 是（KVStoreProvider SPI） | KVStoreProvider SPI |
-| **Vector Store** | InMemory / Milvus / Chroma / PGVector / ES | 是 | VectorStoreProvider SPI |
-| **Object Storage** | 本地 / OBS / S3 / HDFS | 是 | ObjectStorageProvider SPI |
-| **Todo** | 本地文件系统（FileTodoStorage） | **否** | **无 SPI** |
-| **FileStore (Session)** | 本地 JSON 文件 | **否** | **无 SPI** |
+- **统一抽象层**，分三阶段实施
+- Phase 1：补充 Todo/FileStore 的 SPI
+- Phase 2：抽象 TenantResourceStore 统一接口 + 适配现有资源
+- Phase 3：统一切换入口，迁移现有调用点
 
-### 5.2 已有的 SPI 体系
+### 5.2 当前各资源的存储介质
 
-项目已建立了较为完善的存储后端 SPI 体系：
+| 资源 | 当前存储介质 | SPI 支持 | 缺失 |
+|------|------------|---------|------|
+| **Workspace 文件** | 本地文件系统 | WorkspaceStore SPI | - |
+| **Skills 文件** | 本地文件系统 | 同上 | - |
+| **Tmp 文件** | 本地文件系统 | 同上 | - |
+| **Checkpoints 文件** | 本地文件系统 | 同上 | - |
+| **Team Memory 文件** | 本地文件系统 | 同上 | - |
+| **Session State** | InMemory / KV Store | CheckpointerProvider SPI | - |
+| **KV Store 后端** | InMemory / Redis | KVStoreProvider SPI | - |
+| **Vector Store** | InMemory / Milvus / Chroma / PGVector / ES | VectorStoreProvider SPI | - |
+| **Object Storage** | 本地 / OBS / S3 / HDFS | ObjectStorageProvider SPI | - |
+| **Todo** | 本地文件系统 | **无 SPI** | 需补充 |
+| **FileStore (Session)** | 本地 JSON 文件 | **无 SPI** | 需补充 |
 
-```
-WorkspaceStoreProvider (SPI)
-├── LocalWorkspaceStoreProvider
-├── ObsWorkspaceStoreProvider
-├── S3WorkspaceStoreProvider
-└── HdfsWorkspaceStoreProvider
+### 5.3 分阶段实施计划
 
-KVStoreProvider (SPI)
-├── InMemoryKVStoreProvider
-└── RedisKVStoreProvider
+#### Phase 1：补充 SPI（P1）
 
-CheckpointerProvider (SPI)
-├── InMemoryCheckpointerProvider
-├── PersistenceCheckpointerProvider
-└── RedisCheckpointer$Provider
+**目标：** 为 Todo 和 FileStore 补充 SPI 发现机制，与现有 SPI 体系对齐；同时提供 Redis 存储实现，满足 issue34（TodoTool Support Redis）需求。
 
-VectorStoreProvider (SPI)
-├── InMemoryVectorStoreProvider
-├── MilvusVectorStoreProvider
-├── ChromaVectorStoreProvider
-├── PGVectorStoreProvider
-└── ElasticsearchVectorStoreProvider
+##### 1. TodoStorageProvider SPI
 
-ObjectStorageProvider (SPI)
-└── LocalObjectStorageClient
+```java
+public interface TodoStorageProvider {
+    String typeName();
+    TodoStorage create(Map<String, Object> conf);
+}
 ```
 
-### 5.3 Brainstorming：统一存储介质配置
+##### 2. FileTodoStorageProvider（内置）
 
-#### 5.3.1 问题：不同资源的存储介质是独立的
-
-当前每个资源类型有各自的存储后端 SPI，配置分散。无法统一指定"所有资源使用 Redis"或"所有资源使用 OBS"。
-
-#### 5.3.2 建议方案：抽象资源持久化接口
-
-```
-统一存储抽象层
-│
-├── TenantResourceStore (统一接口)
-│   ├── put(key, value)
-│   ├── get(key)
-│   ├── delete(key)
-│   ├── list(prefix)
-│   └── exists(key)
-│
-├── TenantResourceStoreProvider (SPI)
-│   ├── LocalFsStoreProvider       → 本地文件系统实现
-│   ├── RedisStoreProvider         → Redis KV 实现
-│   ├── RdbmsStoreProvider         → 关系数据库实现
-│   ├── ObsStoreProvider           → 对象存储实现
-│   └── HdfsStoreProvider          → HDFS 实现
-│
-└── TenantStorageConfig (统一配置)
-    ├── defaultStoreType: "local"   # 全局默认存储类型
-    ├── resourceStoreOverrides:     # 按资源类型覆盖
-    │   ├── workspace: "local"
-    │   ├── skills: "local"
-    │   ├── tmp: "local"
-    │   ├── session_state: "redis"
-    │   ├── checkpoints: "redis"
-    │   ├── vector: "milvus"
-    │   └── todo: "local"
-    └── tieredConfig:               # 分层存储配置
-        ├── primary: "local"
-        └── secondary: ["obs", "hdfs"]
+```java
+public class FileTodoStorageProvider implements TodoStorageProvider {
+    public String typeName() { return "file"; }
+    public TodoStorage create(Map<String, Object> conf) {
+        return new FileTodoStorage(Path.of((String) conf.get("basePath")));
+    }
+}
 ```
 
-#### 5.3.3 具体实现建议
+##### 3. RedisTodoStorage + RedisTodoStorageProvider
 
-**Step 1：统一资源存储接口**
+基于框架已有的 BaseKVStore 实现，复用 Redis 基础设施，支持多实例共享和租户感知 key。
+
+```java
+public class RedisTodoStorage implements TodoStorage {
+    private final BaseKVStore kvStore;
+
+    public RedisTodoStorage(BaseKVStore kvStore) {
+        this.kvStore = kvStore;
+    }
+
+    @Override
+    public List<TodoItem> load(String sessionId) throws IOException {
+        String key = resolveKey(sessionId);
+        Object data = kvStore.get(key);
+        if (data == null) return new ArrayList<>();
+        if (data instanceof String json) {
+            if (json.isBlank()) return new ArrayList<>();
+            TodoItem[] items = JsonUtils.safeJsonLoads(json, TodoItem[].class, new TodoItem[0]);
+            return new ArrayList<>(List.of(items));
+        }
+        return new ArrayList<>();
+    }
+
+    @Override
+    public void save(String sessionId, List<TodoItem> todos) throws IOException {
+        String key = resolveKey(sessionId);
+        kvStore.set(key, JsonUtils.safeJsonDumps(todos, "[]"));
+    }
+
+    @Override
+    public void delete(String sessionId) throws IOException {
+        String key = resolveKey(sessionId);
+        kvStore.delete(key);
+    }
+
+    private String resolveKey(String sessionId) {
+        // 租户感知：自动从 TenantContextHolder 读取租户上下文，按 tenantId: 前缀隔离
+        return TenantKVStoreKeyResolver.resolveKey("todo:" + sessionId);
+    }
+}
+```
+
+```java
+public class RedisTodoStorageProvider implements TodoStorageProvider {
+    public String typeName() { return "redis"; }
+    
+    public TodoStorage create(Map<String, Object> conf) {
+        // 复用框架已有的 KVStoreFactory 获取 BaseKVStore 实例
+        BaseKVStore kvStore = KVStoreFactory.create(
+            (String) conf.getOrDefault("kvStoreType", "redis"),
+            conf
+        );
+        return new RedisTodoStorage(kvStore);
+    }
+}
+```
+
+**Redis 存储 key 格式：**
+
+| 场景 | key 格式 | 示例 |
+|------|---------|------|
+| 无租户 | `todo:{sessionId}` | `todo:sess-abc123` |
+| 有租户 `dept01` | `dept01:todo:{sessionId}` | `dept01:todo:sess-abc123` |
+
+与 PersistenceCheckpointer 的 key 隔离方式一致（均通过 TenantKVStoreKeyResolver）。
+
+##### 4. TodoStorageFactory
+
+遵循项目已有的工厂模式（WorkspaceStoreFactory、KVStoreFactory、CheckpointerFactory）。
+
+```java
+public final class TodoStorageFactory {
+    private static final Map<String, TodoStorageProvider> REGISTRY = new ConcurrentHashMap<>();
+
+    static {
+        for (TodoStorageProvider provider : ServiceLoader.load(TodoStorageProvider.class)) {
+            REGISTRY.putIfAbsent(provider.typeName(), provider);
+        }
+    }
+
+    public static void register(String type, TodoStorageProvider provider) {
+        REGISTRY.putIfAbsent(type, provider);
+    }
+
+    public static TodoStorage create(String type, Map<String, Object> conf) {
+        TodoStorageProvider provider = REGISTRY.get(type);
+        if (provider == null) {
+            throw new IllegalArgumentException("Unknown TodoStorage type: " + type);
+        }
+        return provider.create(conf != null ? conf : Map.of());
+    }
+
+    public static boolean hasProvider(String type) {
+        return REGISTRY.containsKey(type);
+    }
+}
+```
+
+##### 5. TodoTool 改造
+
+```java
+public class TodoTool {
+    private final TodoStorage storage;
+
+    // 兼容旧构造方式（默认 file）
+    public TodoTool(String workspace) {
+        this.storage = new FileTodoStorage(Path.of(workspace != null ? workspace : "."));
+    }
+
+    public TodoTool(TodoStorage storage) {
+        this.storage = Objects.requireNonNull(storage);
+    }
+
+    // 新增：通过工厂 + 配置创建
+    public static TodoTool fromConfig(String storageType, Map<String, Object> conf) {
+        TodoStorage storage = TodoStorageFactory.create(storageType, conf);
+        return new TodoTool(storage);
+    }
+}
+```
+
+##### 6. SessionStoreProvider SPI（FileStore 补充）
+
+```java
+public interface SessionStoreProvider {
+    String typeName();
+    Store createStore(Map<String, Object> conf);
+}
+
+public class FileSessionStoreProvider implements SessionStoreProvider {
+    public String typeName() { return "file"; }
+    public Store createStore(Map<String, Object> conf) {
+        return new FileStore(Path.of((String) conf.get("storePath")));
+    }
+}
+```
+
+##### 7. SPI Service 注册
+
+```
+# META-INF/services/com.openjiuwen.harness.tools.TodoStorageProvider
+com.openjiuwen.harness.tools.FileTodoStorageProvider
+com.openjiuwen.harness.tools.RedisTodoStorageProvider
+
+# META-INF/services/com.openjiuwen.core.session.store.SessionStoreProvider
+com.openjiuwen.core.session.store.FileSessionStoreProvider
+```
+
+##### 8. 配置集成
+
+TodoTool 存储类型通过 DeepAgentConfig 或 RunnerConfig 配置：
+
+```java
+DeepAgentConfig config = DeepAgentConfig.builder()
+        .todoStorageType("redis")                        // 默认 "file"
+        .todoStorageConfig(Map.of(
+            "kvStoreType", "redis",
+            "host", "redis.example.com",
+            "port", "6379"
+        ))
+        .build();
+```
+
+或在 YAML 配置中：
+
+```yaml
+todo:
+  storage:
+    type: redis
+    config:
+      kvStoreType: redis
+      host: redis.example.com
+      port: 6379
+```
+
+##### 9. 与 issue34 需求的对应关系
+
+| issue34 需求 | Phase 1 覆盖 | 实现位置 |
+|-------------|-------------|---------|
+| 多实例共享 Todo 数据 | ✅ | RedisTodoStorage — 多实例通过 Redis 共享 |
+| 利用框架已有的 Redis 能力 | ✅ | RedisTodoStorageProvider 通过 KVStoreFactory 复用 BaseKVStore + RedisKVStoreProvider |
+| 存储抽象层可扩展 | ✅ | TodoStorageProvider SPI + TodoStorageFactory |
+| 租户数据隔离 | ✅ | RedisTodoStorage.resolveKey() 使用 TenantKVStoreKeyResolver |
+
+#### Phase 2：抽象 TenantResourceStore 统一接口（P2）
+
+**目标：** 定义统一的资源存储接口，按资源类型选择存储后端。
 
 ```java
 public interface TenantResourceStore {
@@ -513,8 +620,6 @@ public interface TenantResourceStore {
     Map<String, Object> listByPrefix(TenantContext ctx, ResourceType type, String prefix);
 }
 ```
-
-**Step 2：资源类型枚举**
 
 ```java
 public enum ResourceType {
@@ -540,8 +645,7 @@ public enum ResourceType {
 }
 ```
 
-**Step 3：统一配置**
-
+**统一配置：**
 ```yaml
 tenant:
   storage:
@@ -569,31 +673,13 @@ tenant:
         port: 19530
 ```
 
-**Step 4：TodoStorage 和 FileStore 增加 SPI**
+#### Phase 3：统一切换入口（P2）
 
-```java
-// 当前 TodoStorage 是普通接口，无 SPI 发现机制
-public interface TodoStorage { ... }
+**目标：** 迁移现有调用点到 TenantResourceStore 统一入口。
 
-// 建议：增加 TodoStorageProvider SPI
-public interface TodoStorageProvider {
-    String typeName();
-    TodoStorage create(Map<String, Object> conf);
-}
-
-// 内置实现
-public class FileTodoStorageProvider implements TodoStorageProvider {
-    public String typeName() { return "file"; }
-    public TodoStorage create(Map<String, Object> conf) {
-        return new FileTodoStorage(Path.of((String) conf.get("basePath")));
-    }
-}
-
-public class RedisTodoStorageProvider implements TodoStorageProvider {
-    public String typeName() { return "redis"; }
-    public TodoStorage create(Map<String, Object> conf) { ... }
-}
-```
+- 所有资源访问通过 `TenantResourceStoreFactory.create(type, config)` 获取
+- 逐步替代各资源独立的 SPI 直接调用
+- 保持向后兼容，旧 API 标记 @Deprecated
 
 ### 5.4 存储介质与资源类型的适配矩阵
 
@@ -613,7 +699,12 @@ public class RedisTodoStorageProvider implements TodoStorageProvider {
 
 ## 六、租户 Skill 与系统默认 Skill 同步设计
 
-### 6.1 当前 Skill 加载机制
+### 6.1 核对结论
+
+- **方案 B+D 组合**：联合查找 + OverlaySkillManager
+- **显式覆盖 + 可撤销**：租户需显式操作覆盖公共 Skill，通过 overlay 标记管理，可撤销覆盖
+
+### 6.2 当前 Skill 加载机制
 
 **SkillManager 的加载流程：**
 
@@ -629,136 +720,16 @@ public class RedisTodoStorageProvider implements TodoStorageProvider {
 - 公共 Skill 对所有租户可见
 - 无租户时只查找公共 Skill（向后兼容）
 
-### 6.2 问题场景
-
-新建租户时，租户的 `skills/` 目录为空。需要从系统默认路径（公共 Skill）同步到租户 Skill 目录。但直接复制会导致：
-
-1. **冗余**：每个租户都复制一份公共 Skill，占用存储
-2. **更新困难**：公共 Skill 更新后，需要同步到所有租户
-3. **影响热加载**：SkillManager 的 `refreshIncrementally()` 依赖 mtime 变化检测
-
-### 6.3 设计方案分析
-
-#### 方案 A：符号链接（Symlink）
-
-```
-tenants/{tenantId}/skills/
-├── private_skill_1/          # 租户自有 Skill（真实目录）
-├── private_skill_2/          # 租户自有 Skill（真实目录）
-├── common_skill_1 -> ../../../skills/common_skill_1/   # 符号链接到公共 Skill
-└── common_skill_2 -> ../../../skills/common_skill_2/   # 符号链接到公共 Skill
-```
-
-**优点：**
-- 零冗余，公共 Skill 只存一份
-- 公共 Skill 更新后所有租户立即可见
-- SkillManager 的 `refreshIncrementally()` 正常工作（symlink 的 mtime 跟随目标文件）
-- 符号链接创建/删除成本低
-
-**缺点：**
-- Windows 上创建符号链接需要管理员权限或开发者模式
-- 需要处理符号链接循环问题（TenantPathSecurity 已有 symlink 检测）
-- 对象存储（OBS/S3/HDFS）不支持符号链接
-
-**实现：**
-```java
-public class TenantSkillSyncManager {
-    private final Path publicSkillRoot;
-    private final TenantWorkspaceResolver workspaceResolver;
-    
-    public void syncPublicSkills(TenantContext ctx) {
-        Path tenantSkillRoot = workspaceResolver.resolveSkillRoot(ctx);
-        if (tenantSkillRoot == null) return;
-        
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(publicSkillRoot)) {
-            for (Path publicSkill : stream) {
-                if (!Files.isDirectory(publicSkill)) continue;
-                Path linkTarget = tenantSkillRoot.resolve(publicSkill.getFileName());
-                if (Files.exists(linkTarget)) continue;  // 租户已有同名 Skill，跳过
-                
-                // 创建符号链接
-                Path relativePath = tenantSkillRoot.relativize(publicSkill);
-                Files.createSymbolicLink(linkTarget, relativePath);
-            }
-        }
-    }
-}
-```
-
-#### 方案 B：联合查找（不复制，查找时合并）
-
-这是**当前已有的方案**——SkillTool 双层查找逻辑。
-
-```
-租户 Skill roots = [tenantSkillRoot, publicSkillRoot]
-查找顺序：tenantSkillRoot → publicSkillRoot
-```
-
-**优点：**
-- 当前已实现，无需改动
-- 零冗余
-- 无平台兼容性问题
-
-**缺点：**
-- 租户无法"修改"公共 Skill（只能覆盖同名）
-- 无法在租户目录中看到公共 Skill 列表（需查找才知道）
-
-**当前实现已够用，但缺少显式的"同步"语义。**
-
-#### 方案 C：引用表（Reference Table）
-
-```java
-// 租户 Skill 引用表
-public interface TenantSkillRefStore {
-    // 添加引用：租户引用公共 Skill
-    void addRef(String tenantId, String skillName, SkillRefType type);
-    
-    // 移除引用
-    void removeRef(String tenantId, String skillName);
-    
-    // 获取租户可见的所有 Skill（引用 + 自有）
-    List<SkillRef> listVisible(String tenantId);
-    
-    // 获取引用的公共 Skill 的实际路径
-    Path resolvePublicSkillPath(String skillName);
-}
-
-public enum SkillRefType {
-    INHERITED,    // 从公共 Skill 继承（自动同步更新）
-    OVERLAY,      // 租户覆盖（同名私有 Skill 优先）
-    CUSTOM        // 租户自建
-}
-```
-
-**优点：**
-- 显式的同步关系管理
-- 可以跟踪哪些租户在使用哪些公共 Skill
-- 可以实现"公共 Skill 更新通知"机制
-- 存储介质无关（引用表可以存在 KV/DB 中）
-
-**缺点：**
-- 增加了一层间接引用，复杂度较高
-- 需要修改 SkillManager 的查找逻辑
-
-#### 方案 D：OverlayFS 式分层（推荐）
-
-```
-Skill 查找链
-    ↓
-租户 Skill 层（可写层）
-    ├── 私有 Skill（实际文件）
-    └── 覆盖标记（.overlay/skill_name → "overridden"）
-    ↓ (如果未找到或未覆盖)
-公共 Skill 层（只读层）
-    └── 公共 Skill（实际文件）
-```
+### 6.3 OverlaySkillManager 设计
 
 ```java
 public class OverlaySkillManager {
-    private final SkillManager tenantSkillManager;   // 租户私有 Skill
-    private final SkillManager publicSkillManager;    // 公共 Skill
-    private final Path overlayDir;                    // 覆盖标记目录
+    private final SkillManager tenantSkillManager;    // 租户私有 Skill
+    private final SkillManager publicSkillManager;     // 公共 Skill
+    private final Path overlayDir;                     // 覆盖标记目录
+    private final TenantContext tenantContext;
     
+    // 获取租户可见的所有 Skill（租户私有 + 未覆盖的公共 Skill）
     public List<Skill> getAllVisibleSkills() {
         List<Skill> result = new ArrayList<>();
         Set<String> seen = new LinkedHashSet<>();
@@ -769,15 +740,49 @@ public class OverlaySkillManager {
             seen.add(skill.getName());
         }
         
-        // 第二层：公共 Skill（跳过已被租户覆盖的）
+        // 第二层：公共 Skill（跳过已被租户显式覆盖的）
         for (Skill skill : publicSkillManager.getAllInOrder()) {
-            if (!seen.contains(skill.getName())) {
+            if (!seen.contains(skill.getName()) && !isOverridden(skill.getName())) {
                 result.add(skill);
                 seen.add(skill.getName());
             }
         }
         
         return result;
+    }
+    
+    // 显式覆盖：创建 overlay 标记 + 租户私有 Skill
+    public void overrideSkill(String skillName, Path tenantSkillDir) {
+        createOverlayMarker(skillName);
+        tenantSkillManager.register(tenantSkillDir);
+    }
+    
+    // 撤销覆盖：删除 overlay 标记 + 移除租户私有 Skill
+    public void revokeOverride(String skillName) {
+        deleteOverlayMarker(skillName);
+        tenantSkillManager.unregister(skillName);
+    }
+    
+    // 检查公共 Skill 是否被租户显式覆盖
+    private boolean isOverridden(String skillName) {
+        return Files.exists(overlayDir.resolve(skillName + ".override"));
+    }
+    
+    private void createOverlayMarker(String skillName) {
+        try {
+            Files.createDirectories(overlayDir);
+            Files.writeString(overlayDir.resolve(skillName + ".override"), "");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    
+    private void deleteOverlayMarker(String skillName) {
+        try {
+            Files.deleteIfExists(overlayDir.resolve(skillName + ".override"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
     
     // 热加载支持：分别对两层做增量刷新
@@ -790,36 +795,28 @@ public class OverlaySkillManager {
 
 ### 6.4 Skill 同步与热加载
 
-**关键问题：公共 Skill 更新后，如何通知租户？**
+**方案 B+D 的热加载机制：**
+- 公共 Skill 更新后，`publicSkillManager.refreshIncrementally()` 自动检测 mtime 变化
+- 租户私有 Skill 更新后，`tenantSkillManager.refreshIncrementally()` 自动检测 mtime 变化
+- 两者独立刷新，互不影响，实时性保证
+- OverlaySkillManager 整合两层的刷新结果
 
-| 方案 | 热加载兼容 | 实时性 | 复杂度 |
-|------|-----------|--------|--------|
-| A. Symlink | 完全兼容（mtime 跟随目标） | 实时 | 低 |
-| B. 联合查找 | 完全兼容（SkillManager 已支持多 root） | 实时 | 最低（当前方案） |
-| C. 引用表 | 需刷新引用表 | 需轮询/通知 | 高 |
-| D. OverlayFS | 完全兼容（分层独立刷新） | 实时 | 中 |
+**与当前实现的对比：**
 
-### 6.5 推荐方案
+| 维度 | 当前实现 | OverlaySkillManager |
+|------|---------|-------------------|
+| 查找逻辑 | SkillTool 内嵌双层查找 | 封装到 OverlaySkillManager |
+| 覆盖机制 | 隐式（同名即覆盖） | 显式覆盖 + 可撤销 |
+| 热加载 | 各自独立刷新 | 分层独立刷新 + 统一整合 |
+| 覆盖管理 | 无法撤销覆盖 | overlay 标记 + revokeOverride() |
 
-**推荐方案 B + D 的组合**，理由：
-
-1. **保持当前方案 B 作为基础**：SkillTool 双层查找已实现且工作良好
-2. **增加 OverlaySkillManager 作为统一入口**：
-   - 封装双层查找逻辑
-   - 提供显式的 `refreshIncrementally()` 方法（分层独立刷新）
-   - 提供覆盖管理（租户可显式"覆盖"公共 Skill）
-3. **可选提供方案 A（Symlink）作为优化**：
-   - 在支持符号链接的平台上，可以创建 Symlink 让租户 Skill 目录中"可见"公共 Skill
-   - 这是用户体验优化，不影响查找逻辑
-4. **不推荐方案 C（引用表）**：过度设计，当前场景不需要
-
-**具体实现步骤：**
+### 6.5 实现步骤
 
 ```
 Step 1: 创建 OverlaySkillManager
     - 封装租户 SkillManager + 公共 SkillManager
-    - getAllVisibleSkills() 实现双层查找
-    - refreshIncrementally() 分层独立刷新
+    - getAllVisibleSkills() 实现双层查找 + overlay 过滤
+    - overrideSkill() / revokeOverride() 显式覆盖管理
 
 Step 2: 修改 SkillTool / ListSkillTool
     - 使用 OverlaySkillManager 替代直接使用 SkillManager
@@ -827,8 +824,8 @@ Step 2: 修改 SkillTool / ListSkillTool
 
 Step 3: 增加租户 Skill 初始化钩子
     - 在 TenantWorkspaceResolver.initializeTenantSpace() 中
-    - 可选：创建 Symlink 到公共 Skill（平台支持时）
-    - 或：仅创建租户 Skill 空目录（依赖 OverlaySkillManager 联合查找）
+    - 创建租户 Skill 空目录
+    - 依赖 OverlaySkillManager 联合查找，不需要预复制公共 Skill
 
 Step 4: 公共 Skill 热加载
     - 公共 SkillManager 定期 refreshIncrementally()
@@ -844,25 +841,26 @@ Step 4: 公共 Skill 热加载
 
 | 优先级 | 行动项 | 影响范围 | 工作量 |
 |--------|-------|---------|--------|
-| **P0** | 修复 tenantId 路径重复问题 | TenantWorkspaceResolver, TenantNamespaceFactories | 小 |
+| **P0** | 修复 tenantId 路径重复问题：改为 `tenants/{tenantId}/` 即 workspace | TenantWorkspaceResolver, TenantNamespaceFactories, LocalWorkspaceStore, WorkspaceType | 小 |
 | **P0** | 完成 PersistenceCheckpointer 的 tenantId 前缀改造 | PersistenceCheckpointer | 小（已部分完成） |
-| **P0** | 完成 VectorStore 集合名的 tenantId 前缀改造 | VectorStore 相关类 | 中 |
-| **P0** | 完成 BaseDbStore SQL 层 tenant_id 列改造 | MessageManager, ScopeUserMappingManager | 中 |
-| **P1** | 引入 TenantLifecycleManager | 新增接口 + 实现 | 中 |
-| **P1** | 增加 OverlaySkillManager 统一 Skill 查找 | 新增类 + 修改 SkillTool | 中 |
-| **P1** | TodoStorage 增加 SPI | TodoStorageProvider + File/Redis 实现 | 小 |
-| **P2** | 统一存储介质配置（TenantResourceStore） | 新增抽象层 | 大 |
-| **P2** | Tmp 文件 TTL 自动清理 | 新增定时任务 | 小 |
+| **P1** | Todo/FileStore 增加显式租户感知 | TodoTool, FileTodoStorage, FileStore | 中 |
+| **P1** | 创建 OverlaySkillManager + 显式覆盖/可撤销机制 | 新增类 + 修改 SkillTool/ListSkillTool | 中 |
+| **P1** | 补充 TodoStorage/FileStore 的 Provider SPI | 新增 SPI 接口 + 内置实现 | 小 |
+| **P1** | Tmp 文件 TTL 自动清理 | 新增 TmpFileCleaner | 小 |
+| **P2** | 抽象 TenantResourceStore 统一接口 + 适配现有资源 | 新增抽象层 | 大 |
+| **P2** | VectorStore 集合名 tenantId 前缀隔离 | VectorStore 相关类 | 中 |
+| **P2** | BaseDbStore SQL 层 tenant_id 列改造 | MessageManager, ScopeUserMappingManager | 中 |
 | **P2** | 租户数据归档/迁移工具 | 新增工具类 | 中 |
-| **P3** | 层级租户支持（extensions 增强） | TenantContext 扩展 | 小 |
+| **P2** | 统一切换入口，迁移现有调用点到 TenantResourceStore | 全局 | 大 |
 
 ### 7.2 关键设计原则
 
 1. **向后兼容优先**：所有改动必须保证 `enableTenantIsolation=false` 时行为完全不变
 2. **SPI 驱动**：新功能通过 SPI 扩展，不修改核心逻辑
-3. **租户标识不透明**：框架不赋予 tenantId 业务语义
+3. **租户标识不透明**：框架不赋予 tenantId 业务语义，租户粒度由业务方决定
 4. **存储介质可替换**：通过 SPI 和配置实现按资源类型选择存储后端
 5. **安全纵深防御**：路径隔离 + KV 前缀隔离 + SQL tenant_id 列，三层防护互为补充
+6. **资源清理由业务方触发**：本服务提供清理接口，不由本服务主动触发
 
 ---
 
@@ -891,3 +889,9 @@ Step 4: 公共 Skill 热加载
 | PersistenceCheckpointer | `src/main/java/com/openjiuwen/core/session/checkpointer/PersistenceCheckpointer.java` |
 | FileStore | `src/main/java/com/openjiuwen/core/session/store/FileStore.java` |
 | 多租户数据隔离文档 | `documents/zh/2.开发指南/高阶用法/多租户数据隔离.md` |
+
+## 8 ST
+多个用户，多个skills相互隔离
+放到测试仓
+
+## TODO复用checkpoint方法？
