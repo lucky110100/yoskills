@@ -130,13 +130,53 @@
 |---|------|------|------|
 | 1 | 新增 TodoStorageProvider | `TodoStorageProvider.java` | SPI 接口 |
 | 2 | 新增 FileTodoStorageProvider | `FileTodoStorageProvider.java` | 内置 file 实现 |
-| 3 | 新增 RedisTodoStorage | `RedisTodoStorage.java` | 基于 BaseKVStore 的 Redis 实现 |
-| 4 | 新增 RedisTodoStorageProvider | `RedisTodoStorageProvider.java` | Redis Provider |
+| 3 | 新增 RedisTodoStorage | `RedisTodoStorage.java` | 基于 BaseKVStore 的 Redis 实现，租户感知 key |
+| 4 | 新增 RedisTodoStorageProvider | `RedisTodoStorageProvider.java` | Redis Provider，复用 KVStoreFactory |
 | 5 | 新增 TodoStorageFactory | `TodoStorageFactory.java` | 工厂类，ServiceLoader 发现 |
 | 6 | 改造 TodoTool | `TodoTool.java` | 新增 fromConfig()，TenantAware 解析路径 |
 | 7 | 改造 FileTodoStorage | `FileTodoStorage.java` | 增加 TenantAware 路径解析 |
-| 8 | 新增 SPI Service 文件 | `META-INF/services/...TodoStorageProvider` | 注册两个 Provider |
-| 9 | DeepAgentConfig 增加 todoStorageType | `DeepAgentConfig.java` | 配置项 |
+| 8 | 新增 SPI Service 文件 | `META-INF/services/...TodoStorageProvider` | 注册 FileTodoStorageProvider + RedisTodoStorageProvider |
+| 9 | DeepAgentConfig 增加配置 | `DeepAgentConfig.java` | todoStorageType（默认"file"）+ todoStorageConfig（Map） |
+| 10 | YAML 配置集成 | RunnerConfig / YAML | todo.storage.type + todo.storage.config 节点 |
+
+**Redis 存储 key 格式：**
+
+| 场景 | key 格式 | 示例 |
+|------|---------|------|
+| 无租户 | `todo:{sessionId}` | `todo:sess-abc123` |
+| 有租户 `dept01` | `dept01:todo:{sessionId}` | `dept01:todo:sess-abc123` |
+
+key 隔离通过 `TenantKVStoreKeyResolver.resolveKey("todo:" + sessionId)` 实现，与 PersistenceCheckpointer 隔离方式一致。
+
+**配置方式：**
+
+Java Config:
+```java
+DeepAgentConfig config = DeepAgentConfig.builder()
+        .todoStorageType("redis")
+        .todoStorageConfig(Map.of("kvStoreType", "redis", "host", "redis.example.com", "port", "6379"))
+        .build();
+```
+
+YAML:
+```yaml
+todo:
+  storage:
+    type: redis
+    config:
+      kvStoreType: redis
+      host: redis.example.com
+      port: 6379
+```
+
+**与 issue34（TodoTool Support Redis）需求对应关系：**
+
+| issue34 需求 | 实施项 | 覆盖 |
+|-------------|-------|------|
+| 多实例共享 Todo 数据 | RedisTodoStorage — 多实例通过 Redis 共享 | ✅ |
+| 利用框架已有的 Redis 能力 | RedisTodoStorageProvider 复用 KVStoreFactory + BaseKVStore + RedisKVStoreProvider | ✅ |
+| 存储抽象层可扩展 | TodoStorageProvider SPI + TodoStorageFactory | ✅ |
+| 租户数据隔离 | RedisTodoStorage.resolveKey() 使用 TenantKVStoreKeyResolver | ✅ |
 
 ### 3.2 UT 测试用例
 
@@ -199,6 +239,12 @@
 | UT-M2-033 | `testStorageConstructor_customStorage` | new TodoStorage(customStorage) 使用传入的实现 |
 | UT-M2-034 | `testTodoCRUD_viaFileConfig` | 通过 fromConfig 创建的 file 模式 TodoTool CRUD 正常 |
 | UT-M2-035 | `testTodoCRUD_viaRedisConfig` | 通过 fromConfig 创建的 redis 模式 TodoTool CRUD 正常 |
+| UT-M2-036 | `testFromConfig_redisWithYamlConfig` | YAML 配置解析后 fromConfig 创建 Redis 模式正常 |
+| UT-M2-037 | `testFromConfig_defaultType_isFile` | 不配置 todoStorageType 时默认使用 file |
+| UT-M2-038 | `testRedisTodoStorage_resolvesKeyViaTenantKVStoreKeyResolver` | 验证 key 通过 TenantKVStoreKeyResolver 生成，无租户时无前缀 |
+| UT-M2-039 | `testRedisTodoStorage_resolvesKeyWithTenantPrefix` | 有租户时 key 自动加 tenantId: 前缀 |
+| UT-M2-040 | `testRedisTodoStorageProvider_reusesKVStoreFactory` | 验证 RedisTodoStorageProvider 通过 KVStoreFactory 获取 BaseKVStore |
+| UT-M2-041 | `testTodoStorageFactory_serviceLoaderDiscoversProviders` | ServiceLoader 自动发现 file 和 redis 两个 Provider |
 
 ### 3.3 ST 系统测试用例
 
@@ -210,6 +256,9 @@
 | ST-M2-004 | TodoTool 从 File 切换到 Redis | 先用 file 模式运行一段时间 | 修改配置切换为 redis 模式 | 新 Todo 写入 Redis，旧 file 数据不受影响（不自动迁移） |
 | ST-M2-005 | TodoTool SPI 自定义扩展 | 实现 CustomTodoStorageProvider | 配置 todoStorageType=custom | TodoTool 使用自定义存储实现 |
 | ST-M2-006 | DeepAgent 集成 Redis Todo | 配置 DeepAgentConfig.todoStorageType=redis | 启动 DeepAgent 执行工作流 | 工作流中 TodoTool 使用 Redis 存储，session 结束后数据可查 |
+| ST-M2-007 | YAML 配置切换存储介质 | YAML 中配置 todo.storage.type=redis | 重启服务 | TodoTool 自动使用 Redis 存储，无需改代码 |
+| ST-M2-008 | Redis 模式多租户 key 前缀验证 | 配置 todoStorageType=redis | tenantA 和 tenantB 各创建同 sessionId 的 Todo | Redis 中 key 分别为 `tenantA:todo:session-1` 和 `tenantB:todo:session-1`，互不干扰 |
+| ST-M2-009 | File→Redis 模式切换后旧数据不可见 | File 模式运行产生 Todo 数据 | 切换到 Redis 模式后读取同 sessionId | 旧 File 数据不自动迁移，Redis 中为空（符合预期，需业务方自行迁移） |
 
 ---
 

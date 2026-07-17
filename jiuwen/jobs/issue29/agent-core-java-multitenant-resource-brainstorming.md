@@ -414,73 +414,70 @@ public class FileTodoStorageProvider implements TodoStorageProvider {
 }
 ```
 
-##### 3. RedisTodoStorage + RedisTodoStorageProvider
+##### 3. KvTodoStorage + KvTodoStorageProvider（复用已有实现）
 
-基于框架已有的 BaseKVStore 实现，复用 Redis 基础设施，支持多实例共享和租户感知 key。
+**关键发现：`KvTodoStorage` 已存在于代码库中，且已基于 `BaseKVStore` SPI + `TenantKVStoreKeyResolver` 实现了存储介质无关的 KV 存储。** 传入 `RedisStore`（它 `extends BaseKVStore`）即为 Redis 模式，无需新建 `RedisTodoStorage`。
 
 ```java
-public class RedisTodoStorage implements TodoStorage {
+// 已有实现 — 无需修改
+public class KvTodoStorage implements TodoStorage {
     private final BaseKVStore kvStore;
 
-    public RedisTodoStorage(BaseKVStore kvStore) {
-        this.kvStore = kvStore;
+    public KvTodoStorage(BaseKVStore kvStore) {
+        this.kvStore = Objects.requireNonNull(kvStore);
     }
 
-    @Override
-    public List<TodoItem> load(String sessionId) throws IOException {
-        String key = resolveKey(sessionId);
-        Object data = kvStore.get(key);
-        if (data == null) return new ArrayList<>();
-        if (data instanceof String json) {
-            if (json.isBlank()) return new ArrayList<>();
-            TodoItem[] items = JsonUtils.safeJsonLoads(json, TodoItem[].class, new TodoItem[0]);
-            return new ArrayList<>(List.of(items));
-        }
-        return new ArrayList<>();
+    private String buildKey(String sessionId) {
+        String rawKey = sessionId + ":todo";
+        return TenantKVStoreKeyResolver.resolveKey(rawKey);
     }
-
-    @Override
-    public void save(String sessionId, List<TodoItem> todos) throws IOException {
-        String key = resolveKey(sessionId);
-        kvStore.set(key, JsonUtils.safeJsonDumps(todos, "[]"));
-    }
-
-    @Override
-    public void delete(String sessionId) throws IOException {
-        String key = resolveKey(sessionId);
-        kvStore.delete(key);
-    }
-
-    private String resolveKey(String sessionId) {
-        // 租户感知：自动从 TenantContextHolder 读取租户上下文，按 tenantId: 前缀隔离
-        return TenantKVStoreKeyResolver.resolveKey("todo:" + sessionId);
-    }
+    // ... load/save/delete 已实现，通过 BaseKVStore SPI 存取
 }
 ```
 
 ```java
-public class RedisTodoStorageProvider implements TodoStorageProvider {
-    public String typeName() { return "redis"; }
+// 新增 Provider — 按存储抽象层分，不按介质分
+public class KvTodoStorageProvider implements TodoStorageProvider {
+    public String typeName() { return "kv"; }
     
     public TodoStorage create(Map<String, Object> conf) {
-        // 复用框架已有的 KVStoreFactory 获取 BaseKVStore 实例
-        BaseKVStore kvStore = KVStoreFactory.create(
-            (String) conf.getOrDefault("kvStoreType", "redis"),
-            conf
-        );
-        return new RedisTodoStorage(kvStore);
+        // 介质选择下沉到 KVStoreFactory：conf 中的 type 字段决定实际介质
+        // type=redis → RedisStore, type=in_memory → InMemoryKVStore
+        String kvStoreType = (String) conf.getOrDefault("kvStoreType", "in_memory");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> kvStoreConf = conf.get("kvStoreConf") instanceof Map
+            ? (Map<String, Object>) conf.get("kvStoreConf") : Map.of();
+        BaseKVStore kvStore = KVStoreFactory.create(kvStoreType, kvStoreConf);
+        return new KvTodoStorage(kvStore);
     }
 }
 ```
 
-**Redis 存储 key 格式：**
+**设计理由：**
+
+| 方案 | 说明 | 评估 |
+|------|------|------|
+| ~~新建 RedisTodoStorage~~ | 为 Redis 单独建一个 TodoStorage 实现 | ❌ 冗余——`KvTodoStorage` 已基于 `BaseKVStore`，传入 `RedisStore` 即为 Redis |
+| **KvTodoStorageProvider (type="kv")** | 按抽象层分 Provider，介质下沉到 `KVStoreFactory` | ✅ 与 `PersistenceCheckpointer`+`KVStoreFactory` 一致，一套配置共享 |
+
+**KV 存储 key 格式（与 PersistenceCheckpointer 一致）：**
 
 | 场景 | key 格式 | 示例 |
 |------|---------|------|
-| 无租户 | `todo:{sessionId}` | `todo:sess-abc123` |
-| 有租户 `dept01` | `dept01:todo:{sessionId}` | `dept01:todo:sess-abc123` |
+| 无租户 | `{sessionId}:todo` | `sess-abc123:todo` |
+| 有租户 `dept01` | `dept01:{sessionId}:todo` | `dept01:sess-abc123:todo` |
 
-与 PersistenceCheckpointer 的 key 隔离方式一致（均通过 TenantKVStoreKeyResolver）。
+租户前缀通过 `TenantKVStoreKeyResolver` 自动添加，与 `PersistenceCheckpointer` 的 key 隔离方式完全一致。
+
+**与 Checkpointer 共享 BaseKVStore 实例：**
+
+```
+kvStoreConfig → KVStoreFactory.create("redis", conf) → RedisStore (共享实例)
+    ├── PersistenceCheckpointer(sharedRedisStore)     ← Checkpointer 复用
+    └── KvTodoStorage(sharedRedisStore)               ← Todo 复用
+```
+
+一套 Redis 连接、一套配置、一个共享实例，Checkpointer 和 Todo 自然打通。
 
 ##### 4. TodoStorageFactory
 
@@ -558,7 +555,7 @@ public class FileSessionStoreProvider implements SessionStoreProvider {
 ```
 # META-INF/services/com.openjiuwen.harness.tools.TodoStorageProvider
 com.openjiuwen.harness.tools.FileTodoStorageProvider
-com.openjiuwen.harness.tools.RedisTodoStorageProvider
+com.openjiuwen.harness.tools.KvTodoStorageProvider
 
 # META-INF/services/com.openjiuwen.core.session.store.SessionStoreProvider
 com.openjiuwen.core.session.store.FileSessionStoreProvider
@@ -566,15 +563,16 @@ com.openjiuwen.core.session.store.FileSessionStoreProvider
 
 ##### 8. 配置集成
 
-TodoTool 存储类型通过 DeepAgentConfig 或 RunnerConfig 配置：
+TodoTool 存储类型通过 DeepAgentConfig 或 RunnerConfig 配置，与 Checkpointer 的 `kvStoreConfig` 共享同一套 Redis 配置：
 
 ```java
 DeepAgentConfig config = DeepAgentConfig.builder()
-        .todoStorageType("redis")                        // 默认 "file"
-        .todoStorageConfig(Map.of(
-            "kvStoreType", "redis",
-            "host", "redis.example.com",
-            "port", "6379"
+        .todoStorageType("kv")                          // "file" | "kv"
+        .kvStoreConfig(Map.of(                          // 与 Checkpointer 共享
+            "type", "redis",
+            "conf", Map.of(
+                "connection", Map.of("url", "redis://redis.example.com:6379")
+            )
         ))
         .build();
 ```
@@ -582,23 +580,30 @@ DeepAgentConfig config = DeepAgentConfig.builder()
 或在 YAML 配置中：
 
 ```yaml
+kvStoreConfig:                    # 唯一入口，Checkpointer + Todo 共用
+  type: redis
+  conf:
+    connection:
+      url: redis://127.0.0.1:6379
+
 todo:
   storage:
-    type: redis
-    config:
-      kvStoreType: redis
-      host: redis.example.com
-      port: 6379
+    type: kv                       # file | kv（kv 模式下介质由 kvStoreConfig 决定）
 ```
+
+**配置统一原则：**
+- `kvStoreConfig` 是 KV 存储介质的唯一配置入口
+- `todoStorageType="kv"` 时，`KvTodoStorageProvider` 通过 `KVStoreFactory` 创建 `BaseKVStore`，自动复用 `kvStoreConfig` 指定的介质
+- 不再为 Todo 单独配 Redis 连接，避免配置重复和连接浪费
 
 ##### 9. 与 issue34 需求的对应关系
 
 | issue34 需求 | Phase 1 覆盖 | 实现位置 |
 |-------------|-------------|---------|
-| 多实例共享 Todo 数据 | ✅ | RedisTodoStorage — 多实例通过 Redis 共享 |
-| 利用框架已有的 Redis 能力 | ✅ | RedisTodoStorageProvider 通过 KVStoreFactory 复用 BaseKVStore + RedisKVStoreProvider |
-| 存储抽象层可扩展 | ✅ | TodoStorageProvider SPI + TodoStorageFactory |
-| 租户数据隔离 | ✅ | RedisTodoStorage.resolveKey() 使用 TenantKVStoreKeyResolver |
+| 多实例共享 Todo 数据 | ✅ | KvTodoStorage(RedisStore) — 多实例通过 Redis 共享 |
+| 利用框架已有的 Redis 能力 | ✅ | KvTodoStorageProvider 通过 KVStoreFactory 复用 BaseKVStore + RedisKVStoreProvider，与 PersistenceCheckpointer 共享同一 RedisStore 实例 |
+| 存储抽象层可扩展 | ✅ | TodoStorageProvider SPI + TodoStorageFactory，按抽象层（file/kv）分 Provider |
+| 租户数据隔离 | ✅ | KvTodoStorage.buildKey() 使用 TenantKVStoreKeyResolver，与 PersistenceCheckpointer 隔离方式一致 |
 
 #### Phase 2：抽象 TenantResourceStore 统一接口（P2）
 
@@ -883,15 +888,15 @@ Step 4: 公共 Skill 热加载
 | SkillManager | `src/main/java/com/openjiuwen/core/singleagent/skills/SkillManager.java` |
 | TodoTool | `src/main/java/com/openjiuwen/harness/tools/TodoTool.java` |
 | FileTodoStorage | `src/main/java/com/openjiuwen/harness/tools/FileTodoStorage.java` |
+| KvTodoStorage | `src/main/java/com/openjiuwen/harness/tools/KvTodoStorage.java` |
 | TodoStorage | `src/main/java/com/openjiuwen/harness/tools/TodoStorage.java` |
+| KVStoreFactory | `src/main/java/com/openjiuwen/spi/store/KVStoreFactory.java` |
+| BaseKVStore | `src/main/java/com/openjiuwen/spi/store/BaseKVStore.java` |
+| RedisStore | `src/main/java/com/openjiuwen/extensions/store/kv/RedisStore.java` |
+| RedisCheckpointer | `src/main/java/com/openjiuwen/extensions/checkpointer/redis/RedisCheckpointer.java` |
 | Checkpointer | `src/main/java/com/openjiuwen/core/session/checkpointer/Checkpointer.java` |
 | InMemoryCheckpointer | `src/main/java/com/openjiuwen/core/session/checkpointer/InMemoryCheckpointer.java` |
 | PersistenceCheckpointer | `src/main/java/com/openjiuwen/core/session/checkpointer/PersistenceCheckpointer.java` |
 | FileStore | `src/main/java/com/openjiuwen/core/session/store/FileStore.java` |
 | 多租户数据隔离文档 | `documents/zh/2.开发指南/高阶用法/多租户数据隔离.md` |
 
-## 8 ST
-多个用户，多个skills相互隔离
-放到测试仓
-
-## TODO复用checkpoint方法？
