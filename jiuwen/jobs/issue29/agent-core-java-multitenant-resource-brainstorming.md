@@ -284,26 +284,11 @@ baseWorkspacePath/
 - `tenants/{tenantId}/` **就是**该租户的 workspace 目录
 - workspace 与其他租户资源（skills/tmp/checkpoints 等）**不是平级关系**，而是 `tenants/{tenantId}/` 本身就是 workspace，其他资源挂在其下
 - 无租户时 `baseWorkspacePath` 直接作为根，完全向后兼容
-- **不需要兼容旧路径**，可直接修改
+- **不需要兼容旧路径**，可直接修改（项目尚未上线，无旧数据迁移需求）
 
-### 4.3 旧路径数据迁移指南
+### 4.3 实现调整方案
 
-**风险：** M1 路径修复后，旧版部署中已存在的租户数据（workspace 文件、skills、checkpoints 等）不会自动出现在新的 `tenants/{tenantId}/` 结构下。
-
-**迁移策略：**
-
-- **无租户场景：** 不受影响，路径不变（向后兼容）
-- **有租户场景（旧路径含 tenantId 重复 bug）：** 业务方需手动执行一次性迁移：
-  1. 停止服务
-  2. 将旧路径 `baseWorkspacePath/{tenantId}/tenants/{tenantId}/` 下所有子目录移动到 `baseWorkspacePath/tenants/{tenantId}/`
-  3. 删除旧路径的空目录 `baseWorkspacePath/{tenantId}/`
-  4. 启动服务，验证 `initializeTenantSpace()` 正常创建目录
-
-**框架不提供自动迁移工具**（P2 阶段可能提供 TenantDataMigrationTool），但需在文档和 CHANGELOG 中明确提醒业务方。
-
-### 4.4 实现调整方案
-
-#### 4.4.1 修改 TenantWorkspaceResolver
+#### 4.3.1 修改 TenantWorkspaceResolver
 
 ```java
 public class TenantWorkspaceResolver {
@@ -377,7 +362,7 @@ public class TenantWorkspaceResolver {
 }
 ```
 
-#### 4.4.2 修改 TenantNamespaceFactories.PATH_DEFAULT
+#### 4.3.2 修改 TenantNamespaceFactories.PATH_DEFAULT
 
 ```java
 // 修改后：
@@ -390,7 +375,7 @@ public static final TenantNamespaceFactory PATH_DEFAULT =
     };
 ```
 
-#### 4.4.3 修改 WorkspaceType
+#### 4.3.3 修改 WorkspaceType
 
 ```java
 public enum WorkspaceType {
@@ -409,7 +394,7 @@ public enum WorkspaceType {
 }
 ```
 
-#### 4.4.4 修改 LocalWorkspaceStore
+#### 4.3.4 修改 LocalWorkspaceStore
 
 ```java
 public class LocalWorkspaceStore implements WorkspaceStore {

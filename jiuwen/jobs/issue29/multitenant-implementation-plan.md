@@ -33,17 +33,6 @@
 | 7 | TenantContextHolder.setCurrentTenant() 增加 tenantId 字符校验 | `TenantContextHolder.java` | 不合规 tenantId 抛出 IllegalArgumentException，防止 safeTenantId 碰撞 |
 | 8 | 更新所有受影响测试 | 多个测试文件 | 适配新路径结构 |
 
-### 2.1.1 旧路径数据迁移提醒
-
-**⚠️ 重要：** M1 路径修复后，旧版部署中已存在的租户数据不会自动迁移到新路径结构。业务方需手动执行一次性迁移：
-
-1. 停止服务
-2. 将旧路径 `baseWorkspacePath/{tenantId}/tenants/{tenantId}/` 下所有子目录移动到 `baseWorkspacePath/tenants/{tenantId}/`
-3. 删除旧路径的空目录 `baseWorkspacePath/{tenantId}/`
-4. 启动服务，验证 `initializeTenantSpace()` 正常创建目录
-
-**无租户场景不受影响**（路径不变）。需在 CHANGELOG 和升级文档中明确提醒。
-
 ### 2.2 UT 测试用例
 
 #### 2.2.1 TenantWorkspaceResolverTest（修改现有）
@@ -133,9 +122,6 @@
 | ST-M1-003 | 多租户路径隔离验证 | 创建 tenantA 和 tenantB | 分别写入文件到各自 workspace | tenantA 文件在 tenantB workspace 中不可见，反之亦然 |
 | ST-M1-004 | PersistenceCheckpointer 多租户验证 | 配置 KVStore=Redis | tenantA 和 tenantB 各创建同一 sessionId 的 session | Redis 中 key 分别为 `tenantA:session-1:...` 和 `tenantB:session-1:...`，互不干扰 |
 | ST-M1-005 | 路径穿越安全验证 | 启用多租户 | 传入 tenantId 含 `../../` | safeTenantId 过滤后路径仍在租户边界内，无越权访问 |
-| ST-M1-006 | 旧路径数据手动迁移验证 | 旧版数据在 `baseWorkspacePath/{tenantId}/tenants/{tenantId}/` | 执行手动迁移步骤（停止服务→移动目录→启动服务） | 旧数据在新路径 `baseWorkspacePath/tenants/{tenantId}/` 下可正常访问 |
-
-> **旧路径迁移说明：** M1 路径修复后，旧版部署中有租户数据时需手动迁移。步骤：停止服务 → 将 `baseWorkspacePath/{tenantId}/tenants/{tenantId}/` 下子目录移动到 `baseWorkspacePath/tenants/{tenantId}/` → 删除旧空目录 → 启动服务验证。框架不提供自动迁移工具。
 
 ---
 
