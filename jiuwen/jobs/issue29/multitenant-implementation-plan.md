@@ -11,7 +11,7 @@
 | 里程碑 | 范围 | 预估工作量 | 前置依赖 |
 |--------|------|-----------|---------|
 | **M1: P0 路径修复** | 修复 tenantId 路径重复 + PersistenceCheckpointer tenantId 前缀 | 小 | 无 |
-| **M2: P1 Todo 显式隔离+SPI** | TodoStorage SPI + KvTodoStorage 复用 + TodoTool 改造 + Todo 显式租户感知 | 中 | M1 |
+| **M2: P1 Todo+FileStore 显式隔离+SPI** | TodoStorage SPI + KvTodoStorage 复用 + TodoTool 改造 + Todo/FileStore 显式租户感知 + SessionStoreProvider SPI | 中 | M1 |
 | **M3: P1 OverlaySkillManager** | OverlaySkillManager + 显式覆盖/可撤销 + SkillTool 改造 | 中 | M1 |
 | **M4: P1 Tmp TTL 清理** | TmpFileCleaner + TenantResourceCleaner 接口 | 小 | M1 |
 | **M5: P2 统一存储抽象** | TenantResourceStore + 适配 + 迁移 + VectorStore/DB 隔离 | 大 | M2, M3, M4 |
@@ -25,12 +25,24 @@
 | # | 变更 | 文件 | 说明 |
 |---|------|------|------|
 | 1 | 修改 PATH_DEFAULT | `TenantNamespaceFactories.java` | 租户时返回 `tenants/{tenantId}`，无租户返回空串 |
-| 2 | 重写 TenantWorkspaceResolver | `TenantWorkspaceResolver.java` | `tenants/{tenantId}/` 即 workspace，新增 resolveTeamMemoryDir/resolveTodoDir |
+| 2 | 重写 TenantWorkspaceResolver | `TenantWorkspaceResolver.java` | `tenants/{tenantId}/` 即 workspace，新增 resolveTeamMemoryDir/resolveTodoDir；**initializeTenantSpace() 增加创建 todo 子目录** |
 | 3 | 修改 WorkspaceType | `WorkspaceType.java` | 新增 TODO，WORKSPACE 的 subDirectory 为空串 |
 | 4 | 修改 LocalWorkspaceStore | `LocalWorkspaceStore.java` | 处理空 subDirectory，createDirectories 增加 todo |
 | 5 | 修改 TieredWorkspaceManager | `TieredWorkspaceManager.java` | 适配新的路径结构 |
 | 6 | 完成 PersistenceCheckpointer tenantId 前缀 | `PersistenceCheckpointer.java` | 确认所有 KV 操作使用 TenantKVStoreKeyResolver |
-| 7 | 更新所有受影响测试 | 多个测试文件 | 适配新路径结构 |
+| 7 | TenantContextHolder.setCurrentTenant() 增加 tenantId 字符校验 | `TenantContextHolder.java` | 不合规 tenantId 抛出 IllegalArgumentException，防止 safeTenantId 碰撞 |
+| 8 | 更新所有受影响测试 | 多个测试文件 | 适配新路径结构 |
+
+### 2.1.1 旧路径数据迁移提醒
+
+**⚠️ 重要：** M1 路径修复后，旧版部署中已存在的租户数据不会自动迁移到新路径结构。业务方需手动执行一次性迁移：
+
+1. 停止服务
+2. 将旧路径 `baseWorkspacePath/{tenantId}/tenants/{tenantId}/` 下所有子目录移动到 `baseWorkspacePath/tenants/{tenantId}/`
+3. 删除旧路径的空目录 `baseWorkspacePath/{tenantId}/`
+4. 启动服务，验证 `initializeTenantSpace()` 正常创建目录
+
+**无租户场景不受影响**（路径不变）。需在 CHANGELOG 和升级文档中明确提醒。
 
 ### 2.2 UT 测试用例
 
@@ -59,56 +71,58 @@
 | UT-M1-019 | `testInitializeTenantSpace_concurrentSafety` | 20 线程并发初始化同一租户，只创建一次 |
 | UT-M1-020 | `testSafeTenantId_specialChars_sanitized` | 特殊字符被替换，路径安全 |
 | UT-M1-021 | `testDifferentTenants_isolatedPaths` | 不同租户路径互不包含 |
+| UT-M1-022 | `testSetCurrentTenant_invalidTenantId_throws` | tenantId 含非法字符时抛出 IllegalArgumentException |
+| UT-M1-023 | `testSetCurrentTenant_validTenantId_accepted` | tenantId 仅含 `[a-zA-Z0-9_-]` 时正常设置 |
 
 #### 2.2.2 TenantNamespaceFactoriesTest（修改现有）
 
 | 用例 ID | 用例名称 | 测试要点 |
 |---------|---------|---------|
-| UT-M1-022 | `testPathDefault_withTenant` | 验证返回 `tenants/{tenantId}` |
-| UT-M1-023 | `testPathDefault_noTenant` | 验证返回空串 |
-| UT-M1-024 | `testKvStoreDefault_withTenant` | 验证返回 `{tenantId}:rawKey` |
-| UT-M1-025 | `testKvStoreDefault_noTenant` | 验证返回 rawKey 不变 |
+| UT-M1-024 | `testPathDefault_withTenant` | 验证返回 `tenants/{tenantId}` |
+| UT-M1-025 | `testPathDefault_noTenant` | 验证返回空串 |
+| UT-M1-026 | `testKvStoreDefault_withTenant` | 验证返回 `{tenantId}:rawKey` |
+| UT-M1-027 | `testKvStoreDefault_noTenant` | 验证返回 rawKey 不变 |
 
 #### 2.2.3 LocalWorkspaceStoreTest（新增）
 
 | 用例 ID | 用例名称 | 测试要点 |
 |---------|---------|---------|
-| UT-M1-026 | `testResolvePath_workspaceType_emptySubDir` | WORKSPACE 类型 subDirectory 为空串时路径正确 |
-| UT-M1-027 | `testResolvePath_skillType` | SKILLS 类型路径包含 skills 子目录 |
-| UT-M1-028 | `testResolveDefaultPath_emptySubDir` | 默认无租户 + 空子目录时返回 basePath |
-| UT-M1-029 | `testCreateDirectories_createsAllSubDirs` | 创建 skills/tmp/checkpoints/team_memory/todo |
+| UT-M1-028 | `testResolvePath_workspaceType_emptySubDir` | WORKSPACE 类型 subDirectory 为空串时路径正确 |
+| UT-M1-029 | `testResolvePath_skillType` | SKILLS 类型路径包含 skills 子目录 |
+| UT-M1-030 | `testResolveDefaultPath_emptySubDir` | 默认无租户 + 空子目录时返回 basePath |
+| UT-M1-031 | `testCreateDirectories_createsAllSubDirs` | 创建 skills/tmp/checkpoints/team_memory/todo |
 
 #### 2.2.4 TieredWorkspaceManagerTest（修改现有）
 
 | 用例 ID | 用例名称 | 测试要点 |
 |---------|---------|---------|
-| UT-M1-030 | `testResolveWorkspace_newPathStructure` | 验证新路径 `tenants/{tid}/` 下无重复 |
-| UT-M1-031 | `testResolveDefault_noTenant` | 验证无租户默认路径不变 |
-| UT-M1-032 | `testInitializeTenantSpace_newStructure` | 验证目录结构符合新设计 |
-| UT-M1-033 | `testCustomNamespaceFactory` | 自定义工厂仍可用 |
-| UT-M1-034 | `testRemoteStore_newPathStructure` | OBS/S3 远程路径也使用新结构 |
+| UT-M1-032 | `testResolveWorkspace_newPathStructure` | 验证新路径 `tenants/{tid}/` 下无重复 |
+| UT-M1-033 | `testResolveDefault_noTenant` | 验证无租户默认路径不变 |
+| UT-M1-034 | `testInitializeTenantSpace_newStructure` | 验证目录结构符合新设计 |
+| UT-M1-035 | `testCustomNamespaceFactory` | 自定义工厂仍可用 |
+| UT-M1-036 | `testRemoteStore_newPathStructure` | OBS/S3 远程路径也使用新结构 |
 
 #### 2.2.5 TenantBackwardCompatTest（修改现有）
 
 | 用例 ID | 用例名称 | 测试要点 |
 |---------|---------|---------|
-| UT-M1-035 | `testNoTenant_workspaceRoot_isBasePath` | 无租户时 workspace = baseWorkspacePath |
-| UT-M1-036 | `testNoTenant_skillRoot_isBaseSkills` | 无租户时 skill = baseWorkspacePath/skills |
-| UT-M1-037 | `testNoTenant_tmpDir_isBaseTmp` | 无租户时 tmp = baseWorkspacePath/tmp |
-| UT-M1-038 | `testNoTenant_kvKey_originalFormat` | KV key 无前缀 |
-| UT-M1-039 | `testNoTenant_pathWithinTenant_alwaysTrue` | 路径校验始终通过 |
+| UT-M1-037 | `testNoTenant_workspaceRoot_isBasePath` | 无租户时 workspace = baseWorkspacePath |
+| UT-M1-038 | `testNoTenant_skillRoot_isBaseSkills` | 无租户时 skill = baseWorkspacePath/skills |
+| UT-M1-039 | `testNoTenant_tmpDir_isBaseTmp` | 无租户时 tmp = baseWorkspacePath/tmp |
+| UT-M1-040 | `testNoTenant_kvKey_originalFormat` | KV key 无前缀 |
+| UT-M1-041 | `testNoTenant_pathWithinTenant_alwaysTrue` | 路径校验始终通过 |
 
 #### 2.2.6 PersistenceCheckpointerTenantTest（新增）
 
 | 用例 ID | 用例名称 | 测试要点 |
 |---------|---------|---------|
-| UT-M1-040 | `testAgentStateKey_withTenant` | Agent 状态 key 格式为 `tenantId:sessionId:agent:agentId:state_blobs` |
-| UT-M1-041 | `testAgentStateKey_noTenant` | 无租户 key 格式为 `sessionId:agent:agentId:state_blobs` |
-| UT-M1-042 | `testWorkflowStateKey_withTenant` | Workflow 状态 key 带租户前缀 |
-| UT-M1-043 | `testGraphStateKey_withTenant` | Graph 状态 key 带租户前缀 |
-| UT-M1-044 | `testRelease_withTenant_deletesByPrefix` | release 按 `tenantId:sessionId:` 前缀删除 |
-| UT-M1-045 | `testSessionExists_withTenant` | sessionExists 正确检测租户前缀下的状态 |
-| UT-M1-046 | `testTenantIsolation_sameSession_differentTenants` | 同一 sessionId 在不同租户下状态独立 |
+| UT-M1-042 | `testAgentStateKey_withTenant` | Agent 状态 key 格式为 `tenantId:sessionId:agent:agentId:state_blobs` |
+| UT-M1-043 | `testAgentStateKey_noTenant` | 无租户 key 格式为 `sessionId:agent:agentId:state_blobs` |
+| UT-M1-044 | `testWorkflowStateKey_withTenant` | Workflow 状态 key 带租户前缀 |
+| UT-M1-045 | `testGraphStateKey_withTenant` | Graph 状态 key 带租户前缀 |
+| UT-M1-046 | `testRelease_withTenant_deletesByPrefix` | release 按 `tenantId:sessionId:` 前缀删除 |
+| UT-M1-047 | `testSessionExists_withTenant` | sessionExists 正确检测租户前缀下的状态 |
+| UT-M1-048 | `testTenantIsolation_sameSession_differentTenants` | 同一 sessionId 在不同租户下状态独立 |
 
 ### 2.3 ST 系统测试用例
 
@@ -119,25 +133,33 @@
 | ST-M1-003 | 多租户路径隔离验证 | 创建 tenantA 和 tenantB | 分别写入文件到各自 workspace | tenantA 文件在 tenantB workspace 中不可见，反之亦然 |
 | ST-M1-004 | PersistenceCheckpointer 多租户验证 | 配置 KVStore=Redis | tenantA 和 tenantB 各创建同一 sessionId 的 session | Redis 中 key 分别为 `tenantA:session-1:...` 和 `tenantB:session-1:...`，互不干扰 |
 | ST-M1-005 | 路径穿越安全验证 | 启用多租户 | 传入 tenantId 含 `../../` | safeTenantId 过滤后路径仍在租户边界内，无越权访问 |
+| ST-M1-006 | 旧路径数据手动迁移验证 | 旧版数据在 `baseWorkspacePath/{tenantId}/tenants/{tenantId}/` | 执行手动迁移步骤（停止服务→移动目录→启动服务） | 旧数据在新路径 `baseWorkspacePath/tenants/{tenantId}/` 下可正常访问 |
+
+> **旧路径迁移说明：** M1 路径修复后，旧版部署中有租户数据时需手动迁移。步骤：停止服务 → 将 `baseWorkspacePath/{tenantId}/tenants/{tenantId}/` 下子目录移动到 `baseWorkspacePath/tenants/{tenantId}/` → 删除旧空目录 → 启动服务验证。框架不提供自动迁移工具。
 
 ---
 
-## 三、M2: P1 Todo 显式隔离 + SPI
+## 三、M2: P1 Todo + FileStore 显式隔离 + SPI
 
 ### 3.1 变更清单
 
-| # | 变更 | 文件 | 说明 |
-|---|------|------|------|
-| 1 | 新增 TodoStorageProvider | `TodoStorageProvider.java` | SPI 接口 |
-| 2 | 新增 FileTodoStorageProvider | `FileTodoStorageProvider.java` | 内置 file 实现 |
-| 3 | 新增 KvTodoStorageProvider | `KvTodoStorageProvider.java` | KV 抽象层 Provider，复用已有 KvTodoStorage + KVStoreFactory，介质由 kvStoreConfig 决定 |
-| 4 | 新增 TodoStorageFactory | `TodoStorageFactory.java` | 工厂类，ServiceLoader 发现 |
-| 5 | 改造 TodoTool | `TodoTool.java` | 新增 fromConfig()，TenantAware 解析路径 |
-| 6 | 改造 FileTodoStorage | `FileTodoStorage.java` | 增加 TenantAware 路径解析 |
-| 7 | 新增 SPI Service 文件 | `META-INF/services/...TodoStorageProvider` | 注册 FileTodoStorageProvider + KvTodoStorageProvider |
-| 8 | DeepAgentConfig 增加配置 | `DeepAgentConfig.java` | todoStorageType（默认"file"，可选"kv"），KV 存储介质由 kvStoreConfig 统一决定 |
-| 9 | 修改 TaskPlanningRail | `TaskPlanningRail.java` | TodoTool 创建逻辑适配新 SPI，kv 模式复用 DeepAgent.kvStore |
-| 10 | RunnerImpl 共享 BaseKVStore | `RunnerImpl.java` | kvStoreConfig 创建的 BaseKVStore 实例共享给 PersistenceCheckpointer 和 KvTodoStorage |
+| # | 变更 | 文件 | 说明 | 状态 |
+|---|------|------|------|------|
+| 1 | 新增 TodoStorageProvider | `TodoStorageProvider.java` | SPI 接口 | **全新** |
+| 2 | 新增 FileTodoStorageProvider | `FileTodoStorageProvider.java` | 内置 file 实现 | **全新** |
+| 3 | 新增 KvTodoStorageProvider | `KvTodoStorageProvider.java` | KV 抽象层 Provider，复用已有 KvTodoStorage + KVStoreFactory，介质由 kvStoreConfig 决定 | **全新**（KvTodoStorage 已存在，Provider 为新增） |
+| 4 | 新增 TodoStorageFactory | `TodoStorageFactory.java` | 工厂类，ServiceLoader 发现 | **全新** |
+| 5 | 改造 TodoTool | `TodoTool.java` | 新增 fromConfig()，TenantAware 解析路径 | **改造**（已有部分实现） |
+| 6 | 改造 FileTodoStorage | `FileTodoStorage.java` | 增加 TenantAware 路径解析（load/save/delete 接收 TenantContext 参数） | **改造** |
+| 7 | 新增 SPI Service 文件 | `META-INF/services/...TodoStorageProvider` | 注册 FileTodoStorageProvider + KvTodoStorageProvider | **全新** |
+| 8 | DeepAgentConfig 增加配置 | `DeepAgentConfig.java` | todoStorageType（默认"file"，可选"kv"），KV 存储介质由 kvStoreConfig 统一决定 | **已实现**（需确认） |
+| 9 | 修改 TaskPlanningRail | `TaskPlanningRail.java` | TodoTool 创建逻辑适配新 SPI，kv 模式复用 DeepAgent.kvStore | **已实现**（需确认与 SPI 对齐） |
+| 10 | RunnerImpl 共享 BaseKVStore | `RunnerImpl.java` | kvStoreConfig 创建的 BaseKVStore 实例共享给 PersistenceCheckpointer 和 KvTodoStorage | **已实现**（需确认生命周期管理） |
+| 11 | 新增 SessionStoreProvider | `SessionStoreProvider.java` | SPI 接口（typeName() + createStore()） | **全新** |
+| 12 | 新增 FileSessionStoreProvider | `FileSessionStoreProvider.java` | 内置 file 实现 | **全新** |
+| 13 | 改造 FileStore | `FileStore.java` | 增加 TenantAware 路径解析（read/write 接收 TenantContext 参数） | **改造** |
+| 14 | 新增 SPI Service 文件 | `META-INF/services/...SessionStoreProvider` | 注册 FileSessionStoreProvider | **全新** |
+| 15 | DeepAgentConfig 增加 sessionStoreType | `DeepAgentConfig.java` | sessionStoreType（默认"file"），与 todoStorageType 模式一致 | **全新** |
 
 **设计要点：KvTodoStorage 已存在，无需新建 RedisTodoStorage**
 
@@ -269,6 +291,25 @@ kvStoreConfig → KVStoreFactory.create("redis", conf) → RedisStore (共享实
 | UT-M2-044 | `testTodoStorageFactory_serviceLoaderDiscoversProviders` | ServiceLoader 自动发现 file 和 kv 两个 Provider |
 | UT-M2-045 | `testTaskPlanningRail_kvMode_usesSharedKvStore` | TaskPlanningRail 创建 TodoTool 时 kv 模式复用 DeepAgent.kvStore |
 
+#### 3.2.6 SessionStoreProviderTest（新增）
+
+| 用例 ID | 用例名称 | 测试要点 |
+|---------|---------|---------|
+| UT-M2-046 | `testFileProvider_typeName` | typeName() 返回 "file" |
+| UT-M2-047 | `testFileProvider_createWithStorePath` | create() 返回 FileStore 实例 |
+| UT-M2-048 | `testFileProvider_createWithTenantContext` | create() 传入含 tenantId 的路径时 FileStore 在租户路径下读写 |
+
+#### 3.2.7 TenantAwareFileStoreTest（新增）
+
+| 用例 ID | 用例名称 | 测试要点 |
+|---------|---------|---------|
+| UT-M2-049 | `testWrite_noTenant_defaultPath` | 无租户时保存在 baseWorkspacePath/session_store.json |
+| UT-M2-050 | `testWrite_withTenant_tenantPath` | 有租户时保存在 tenants/{tenantId}/session_store.json |
+| UT-M2-051 | `testRead_noTenant` | 无租户时从默认路径读取 |
+| UT-M2-052 | `testRead_withTenant` | 有租户时从租户路径读取 |
+| UT-M2-053 | `testTenantIsolation_sessionStore` | 不同租户 Session 数据不互相可见 |
+| UT-M2-054 | `testRead_emptyTenant_returnsDefault` | TenantContext 为空时走默认路径（向后兼容） |
+
 ### 3.3 ST 系统测试用例
 
 | 用例 ID | 用例名称 | 前置条件 | 操作步骤 | 预期结果 |
@@ -282,6 +323,8 @@ kvStoreConfig → KVStoreFactory.create("redis", conf) → RedisStore (共享实
 | ST-M2-007 | YAML 配置 kvStoreConfig 共享 | YAML 中配置 kvStoreConfig.type=redis + todo.storage.type=kv | 重启服务 | TodoTool 和 Checkpointer 自动使用同一 Redis 存储，无需改代码 |
 | ST-M2-008 | KV 模式多租户 key 前缀验证 | 配置 todoStorageType=kv + kvStoreConfig=redis | tenantA 和 tenantB 各创建同 sessionId 的 Todo | Redis 中 key 分别为 `tenantA:session-1:todo` 和 `tenantB:session-1:todo`，互不干扰 |
 | ST-M2-009 | File→KV 模式切换后旧数据不可见 | File 模式运行产生 Todo 数据 | 切换到 KV 模式后读取同 sessionId | 旧 File 数据不自动迁移，KV 中为空（符合预期，需业务方自行迁移） |
+| ST-M2-010 | FileStore 多租户隔离验证 | 配置 enableTenantIsolation=true | tenantA 和 tenantB 各写入 Session Store 数据 | 各租户 FileStore JSON 文件在独立路径下，互不可见 |
+| ST-M2-011 | FileStore 无租户向后兼容验证 | 不传 TenantContext | 写入/读取 Session Store | 数据在默认路径 baseWorkspacePath 下，行为与修改前一致 |
 
 ---
 
@@ -291,11 +334,12 @@ kvStoreConfig → KVStoreFactory.create("redis", conf) → RedisStore (共享实
 
 | # | 变更 | 文件 | 说明 |
 |---|------|------|------|
-| 1 | 新增 OverlaySkillManager | `OverlaySkillManager.java` | 双层查找 + overlay 标记 |
+| 1 | 新增 OverlaySkillManager | `OverlaySkillManager.java` | 双层查找 + overlay 标记（标记目录：`tenants/{tenantId}/.overlay/`，与 tmp 清理不冲突） |
 | 2 | 改造 SkillTool | `SkillTool.java` | 使用 OverlaySkillManager |
 | 3 | 改造 ListSkillTool | `ListSkillTool.java` | 使用 OverlaySkillManager |
-| 4 | 增加 overrideSkill/revokeOverride | `OverlaySkillManager.java` | 显式覆盖管理 |
-| 5 | 修改 TenantWorkspaceResolver | `TenantWorkspaceResolver.java` | 初始化时创建租户 Skill 空目录 |
+| 4 | 增加 overrideSkill/revokeOverride | `OverlaySkillManager.java` | 显式覆盖管理（overlay 标记文件为空文件，仅用文件存在性判断） |
+| 5 | 修改 TenantWorkspaceResolver | `TenantWorkspaceResolver.java` | 初始化时创建租户 Skill 空目录 + `.overlay/` 目录 |
+| 6 | OverlaySkillManager 启动时自动迁移隐式覆盖 | `OverlaySkillManager.java` | 扫描租户 Skill 中与公共 Skill 同名者，自动创建 overlay 标记（幂等） |
 
 ### 4.2 UT 测试用例
 
@@ -351,10 +395,11 @@ kvStoreConfig → KVStoreFactory.create("redis", conf) → RedisStore (共享实
 
 | # | 变更 | 文件 | 说明 |
 |---|------|------|------|
-| 1 | 新增 TenantResourceCleaner | `TenantResourceCleaner.java` | 清理接口 |
-| 2 | 新增 DefaultTenantResourceCleaner | `DefaultTenantResourceCleaner.java` | 默认实现 |
-| 3 | 新增 TmpFileCleaner | `TmpFileCleaner.java` | TTL 定时扫描清理 |
-| 4 | DeepAgentConfig 增加 tmpTtl | `DeepAgentConfig.java` | TTL 配置项，默认 24h |
+| 1 | 新增 TenantResourceCleaner | `TenantResourceCleaner.java` | 清理接口（含文件系统类 + KV 类清理方法） |
+| 2 | 新增 DefaultTenantResourceCleaner | `DefaultTenantResourceCleaner.java` | 默认实现（含 cleanupKVState/cleanupDistributedLocks） |
+| 3 | 新增 TmpFileCleaner | `TmpFileCleaner.java` | TTL 定时扫描清理，含 start()/stop() 生命周期管理 |
+| 4 | DeepAgentConfig 增加 tmpTtl + tmpTtlScanInterval | `DeepAgentConfig.java` | TTL 配置项（默认 24h）+ 扫描间隔（默认 1h） |
+| 5 | TmpFileCleaner 集成到 DeepAgent/RunnerImpl 生命周期 | `DeepAgent.java` / `RunnerImpl.java` | init() 调用 start()，destroy()/stop() 调用 stop() |
 
 ### 5.2 UT 测试用例
 
@@ -370,6 +415,8 @@ kvStoreConfig → KVStoreFactory.create("redis", conf) → RedisStore (共享实
 | UT-M4-006 | `testEmptyTmpDir_noError` | 空 tmp 目录不报错 |
 | UT-M4-007 | `testNoTenantTmpDir_noError` | 无租户且默认 tmp 不存在时不报错 |
 | UT-M4-008 | `testConcurrentCleanAndWrite` | 清理与写入并发执行不异常 |
+| UT-M4-008a | `testStartStop_lifecycle` | start() 启动调度器，stop() 优雅关闭，5秒超时强制终止 |
+| UT-M4-008b | `testStop_idempotent` | 重复调用 stop() 不报错 |
 
 #### 5.2.2 TenantResourceCleanerTest（新增）
 
@@ -380,16 +427,19 @@ kvStoreConfig → KVStoreFactory.create("redis", conf) → RedisStore (共享实
 | UT-M4-011 | `testCleanupCheckpoints_deletesSessionData` | cleanupCheckpoints 删除指定 session 的 checkpoint |
 | UT-M4-012 | `testCleanupTeamMemory_deletesTeamDir` | cleanupTeamMemory 删除指定 team 的 memory |
 | UT-M4-013 | `testCleanupTodo_deletesTodoDir` | cleanupTodo 删除指定 session 的 todo |
-| UT-M4-014 | `testCleanupAll_deletesEntireTenant` | cleanupAll 删除整个租户目录 |
-| UT-M4-015 | `testCleanupWorkspace_nonExistentTenant_noError` | 清理不存在的租户不报错 |
-| UT-M4-016 | `testCleanupAll_preservesPublicSkills` | cleanupAll 不删除公共 Skill |
+| UT-M4-014 | `testCleanupKVState_deletesByTenantPrefix` | cleanupKVState(tenantId) 删除 KV 中 `tenantId:*` 前缀的所有 key |
+| UT-M4-014a | `testCleanupKVState_withSessionId_deletesBySessionPrefix` | cleanupKVState(tenantId, sessionId) 删除 `tenantId:sessionId:*` 前缀的 key |
+| UT-M4-014b | `testCleanupDistributedLocks_releasesTenantLocks` | cleanupDistributedLocks(tenantId) 释放租户持有的所有分布式锁 |
+| UT-M4-015 | `testCleanupAll_deletesEntireTenant_plusKVData` | cleanupAll 删除租户目录 + KV 前缀数据 + 释放分布式锁 |
+| UT-M4-016 | `testCleanupWorkspace_nonExistentTenant_noError` | 清理不存在的租户不报错 |
+| UT-M4-017 | `testCleanupAll_preservesPublicSkills` | cleanupAll 不删除公共 Skill |
 
 ### 5.3 ST 系统测试用例
 
 | 用例 ID | 用例名称 | 前置条件 | 操作步骤 | 预期结果 |
 |---------|---------|---------|---------|---------|
 | ST-M4-001 | Tmp TTL 自动清理验证 | 配置 tmpTtl=1h | 在 tmp 目录创建文件后等待超时 | 超 TTL 的文件被自动清理，TTL 内的文件保留 |
-| ST-M4-002 | 租户资源清理端到端验证 | 创建租户并产生各类资源 | 业务方调用 cleanupAll(tenantId) | 租户目录被删除，公共资源不受影响 |
+| ST-M4-002 | 租户资源清理端到端验证 | 创建租户并产生各类资源（文件 + KV 数据） | 业务方调用 cleanupAll(tenantId) | 租户目录被删除，KV 前缀数据被清除，公共资源不受影响 |
 | ST-M4-003 | 部分清理不影响其他资源验证 | 租户有 workspace + skills + todo | 业务方调用 cleanupSkills(tenantId) | skills 目录删除，workspace 和 todo 保留 |
 | ST-M4-004 | Tmp 清理不影响运行中 Session | Session 运行中在 tmp 写入临时文件 | TmpFileCleaner 触发扫描 | 运行中使用的 tmp 文件（TTL 内）不被删除 |
 

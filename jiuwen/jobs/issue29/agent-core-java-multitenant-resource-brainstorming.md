@@ -28,6 +28,30 @@ public class TenantContext {
 - **不需要 extensions 辅助层级**。`extensions` 字段保留，仅用于传递业务元数据（如 region 等），不用于表达租户层级关系。
 - `tenantId` 是业务方定义的**不透明标识符**，框架不赋予任何业务语义，只负责按 `tenantId` 做数据空间隔离。
 
+### 1.3 safeTenantId 碰撞风险与约束
+
+`safeTenantId()` 将非 `[a-zA-Z0-9_-]` 的字符统一替换为 `_`，存在碰撞风险：
+
+| 原始 tenantId | safeTenantId | 碰撞？ |
+|--------------|-------------|--------|
+| `dept-01` | `dept_01` | — |
+| `dept.01` | `dept_01` | ⚠️ 与 `dept-01` 碰撞 |
+
+**决策：** 要求业务方 tenantId **仅使用 `[a-zA-Z0-9_-]` 字符**，在 `TenantContextHolder.setCurrentTenant()` 中校验，不合规的 tenantId 抛出 `IllegalArgumentException`。`safeTenantId()` 仅作为最后一道防线（防御路径穿越等极端场景），不应作为字符碰撞的依赖手段。
+
+```java
+public static void setCurrentTenant(TenantContext ctx) {
+    if (ctx != null && ctx.isTenantAware()) {
+        String tid = ctx.getTenantId();
+        if (!tid.matches("[a-zA-Z0-9_-]+")) {
+            throw new IllegalArgumentException(
+                "tenantId must only contain [a-zA-Z0-9_-], got: " + tid);
+        }
+    }
+    CURRENT_TENANT.set(ctx);
+}
+```
+
 ---
 
 ## 二、租户资源界定
@@ -60,10 +84,19 @@ public class TenantContext {
 
 ### 2.3 核对结论：需显式隔离的资源
 
+**「显式租户感知」定义：** 资源的读写接口**显式接收 `TenantContext` 参数**，而非仅依赖外层路径或 ThreadLocal 隐式推断。两种隔离模式的对比：
+
+| 模式 | 机制 | 例子 | 风险 |
+|------|------|------|------|
+| 间接隔离 | 资源存放路径由外层决定，资源本身不知晓租户 | FileTodoStorage 写入 `tenants/{tid}/todo/`，路径由 workspace 决定 | 路径拼错或上下文丢失时数据写入公共区域 |
+| 显式隔离 | 资源接口签名含 TenantContext，内部主动隔离 | KvTodoStorage.buildKey() 使用 TenantKVStoreKeyResolver | 即使上下文丢失，接口参数仍传递租户信息 |
+
+**P1 阶段要求：** Todo 和 FileStore 的核心方法（load/save/delete）必须能接收 `TenantContext` 参数（可选，null 时走默认路径），确保在 ThreadLocal 上下文丢失时仍可正确隔离。
+
 | 资源 | 当前状态 | 要求 |
 |------|---------|------|
-| **Todo** | 间接隔离（依赖 workspace 路径） | **需显式租户感知**，不能仅依赖间接隔离 |
-| **FileStore (Session)** | 间接隔离（依赖 workspace 路径） | **需显式租户感知** |
+| **Todo** | 间接隔离（依赖 workspace 路径） | **需显式租户感知**，接口签名含 TenantContext |
+| **FileStore (Session)** | 间接隔离（依赖 workspace 路径） | **需显式租户感知**，接口签名含 TenantContext |
 | **Vector Store** | 未隔离 | P2 阶段完成 tenantId 前缀隔离 |
 | **DB Store** | 未隔离 | P2 阶段完成 tenant_id 列改造，记忆用 |
 
@@ -129,24 +162,55 @@ public class TenantContext {
 
 ```java
 public interface TenantResourceCleaner {
+    // 文件系统类资源清理
     void cleanupWorkspace(String tenantId);
     void cleanupSkills(String tenantId);
     void cleanupCheckpoints(String tenantId, String sessionId);
     void cleanupTeamMemory(String tenantId, String teamId);
     void cleanupTodo(String tenantId, String sessionId);
+
+    // KV 存储类资源清理
+    void cleanupKVState(String tenantId);
+    void cleanupKVState(String tenantId, String sessionId);
+    void cleanupDistributedLocks(String tenantId);
+
+    // 全量清理（文件系统 + KV）
     void cleanupAll(String tenantId);
 }
 ```
+
+**KV 清理语义说明：**
+
+| 方法 | 清理范围 | 实现方式 |
+|------|---------|---------|
+| `cleanupKVState(tenantId)` | 删除该租户在 KV Store 中所有 `tenantId:*` 前缀的 key | `KVStore.deleteByPrefix("tenantId:")` |
+| `cleanupKVState(tenantId, sessionId)` | 删除该租户指定 session 的所有 KV key | `KVStore.deleteByPrefix("tenantId:sessionId:")` |
+| `cleanupDistributedLocks(tenantId)` | 释放该租户持有的所有分布式锁 | 需配合锁管理器的租户索引 |
+| `cleanupAll(tenantId)` | 删除租户文件目录 + 删除 KV 前缀数据 + 释放分布式锁 | 组合调用以上所有方法 |
 
 ### 3.4 Tmp TTL 清理机制
 
 ```java
 public class TmpFileCleaner {
     private final Duration ttl;  // 默认 24h
+    private final Duration scanInterval;  // 默认 1h，可通过 DeepAgentConfig.tmpTtlScanInterval 配置
     private final ScheduledExecutorService scheduler;
     
     public void start() {
-        scheduler.scheduleAtFixedRate(this::scanAndClean, 1, 1, TimeUnit.HOURS);
+        scheduler.scheduleAtFixedRate(this::scanAndClean,
+            scanInterval.toMillis(), scanInterval.toMillis(), TimeUnit.MILLISECONDS);
+    }
+    
+    public void stop() {
+        scheduler.shutdown();
+        try {
+            if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
+                scheduler.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            scheduler.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
     }
     
     private void scanAndClean() {
@@ -156,6 +220,12 @@ public class TmpFileCleaner {
     }
 }
 ```
+
+**生命周期管理：**
+- `start()` 在 DeepAgent/RunnerImpl 初始化时调用
+- `stop()` 在 DeepAgent/RunnerImpl 销毁时调用（`@PreDestroy` 等价钩子）
+- `scanInterval` 通过 `DeepAgentConfig.tmpTtlScanInterval` 配置，默认 1 小时
+- 应用关闭时优雅等待 5 秒，超时强制终止
 
 ---
 
@@ -216,9 +286,24 @@ baseWorkspacePath/
 - 无租户时 `baseWorkspacePath` 直接作为根，完全向后兼容
 - **不需要兼容旧路径**，可直接修改
 
-### 4.3 实现调整方案
+### 4.3 旧路径数据迁移指南
 
-#### 4.3.1 修改 TenantWorkspaceResolver
+**风险：** M1 路径修复后，旧版部署中已存在的租户数据（workspace 文件、skills、checkpoints 等）不会自动出现在新的 `tenants/{tenantId}/` 结构下。
+
+**迁移策略：**
+
+- **无租户场景：** 不受影响，路径不变（向后兼容）
+- **有租户场景（旧路径含 tenantId 重复 bug）：** 业务方需手动执行一次性迁移：
+  1. 停止服务
+  2. 将旧路径 `baseWorkspacePath/{tenantId}/tenants/{tenantId}/` 下所有子目录移动到 `baseWorkspacePath/tenants/{tenantId}/`
+  3. 删除旧路径的空目录 `baseWorkspacePath/{tenantId}/`
+  4. 启动服务，验证 `initializeTenantSpace()` 正常创建目录
+
+**框架不提供自动迁移工具**（P2 阶段可能提供 TenantDataMigrationTool），但需在文档和 CHANGELOG 中明确提醒业务方。
+
+### 4.4 实现调整方案
+
+#### 4.4.1 修改 TenantWorkspaceResolver
 
 ```java
 public class TenantWorkspaceResolver {
@@ -282,6 +367,7 @@ public class TenantWorkspaceResolver {
                 Files.createDirectories(root.resolve("tmp"));
                 Files.createDirectories(root.resolve("checkpoints"));
                 Files.createDirectories(root.resolve("team_memory"));
+                Files.createDirectories(root.resolve("todo"));
             } catch (Exception e) {
                 throw new RuntimeException("Failed to initialize tenant space: " + tid, e);
             }
@@ -291,7 +377,7 @@ public class TenantWorkspaceResolver {
 }
 ```
 
-#### 4.3.2 修改 TenantNamespaceFactories.PATH_DEFAULT
+#### 4.4.2 修改 TenantNamespaceFactories.PATH_DEFAULT
 
 ```java
 // 修改后：
@@ -304,7 +390,7 @@ public static final TenantNamespaceFactory PATH_DEFAULT =
     };
 ```
 
-#### 4.3.3 修改 WorkspaceType
+#### 4.4.3 修改 WorkspaceType
 
 ```java
 public enum WorkspaceType {
@@ -323,7 +409,7 @@ public enum WorkspaceType {
 }
 ```
 
-#### 4.3.4 修改 LocalWorkspaceStore
+#### 4.4.4 修改 LocalWorkspaceStore
 
 ```java
 public class LocalWorkspaceStore implements WorkspaceStore {
@@ -596,6 +682,17 @@ todo:
 - `todoStorageType="kv"` 时，`KvTodoStorageProvider` 通过 `KVStoreFactory` 创建 `BaseKVStore`，自动复用 `kvStoreConfig` 指定的介质
 - 不再为 Todo 单独配 Redis 连接，避免配置重复和连接浪费
 
+**共享实例生命周期管理：**
+
+| 时机 | 操作 | 位置 |
+|------|------|------|
+| 创建 | `DeepAgent.init()` 或 `RunnerImpl.start()` 中通过 `KVStoreFactory.create()` 创建 | `DeepAgent.kvStore` / `RunnerImpl.kvStore` |
+| 注入 | `PersistenceCheckpointer` 和 `KvTodoStorage` 通过构造器共享同一实例 | `TaskPlanningRail.init()` / `CheckpointerFactory.create()` |
+| 销毁 | `DeepAgent.destroy()` 或 `RunnerImpl.stop()` 中调用 `kvStore.close()` | 依赖 `BaseKVStore` 的 `close()` 方法（RedisStore 关闭连接池） |
+| 动态变更 | 运行中 `kvStoreConfig` 变更不生效，需重启服务 | 不支持热切换 |
+
+> **注意：** `BaseKVStore` 接口需补充 `close()` 方法（当前部分实现如 InMemoryKVStore 无需 close，但 RedisStore 需关闭 Jedis 连接池）。
+
 ##### 9. 与 issue34 需求的对应关系
 
 | issue34 需求 | Phase 1 覆盖 | 实现位置 |
@@ -731,6 +828,10 @@ tenant:
 public class OverlaySkillManager {
     private final SkillManager tenantSkillManager;    // 租户私有 Skill
     private final SkillManager publicSkillManager;     // 公共 Skill
+    // overlayDir 位置：tenants/{tenantId}/.overlay/
+    // 每个被覆盖的公共 Skill 对应一个 {skillName}.override 标记文件（空文件）
+    // 标记文件的存在表示租户已显式选择覆盖该公共 Skill，即使租户私有 Skill 被删除，
+    // 该公共 Skill 仍不会出现在租户可见列表中，直到显式撤销覆盖
     private final Path overlayDir;                     // 覆盖标记目录
     private final TenantContext tenantContext;
     
@@ -798,6 +899,64 @@ public class OverlaySkillManager {
 }
 ```
 
+#### 6.3.1 overlay 标记目录位置
+
+**overlay 标记文件存放路径：** `tenants/{tenantId}/.overlay/{skillName}.override`
+
+**路径推导：**
+```
+baseWorkspacePath/
+└── tenants/
+    └── {tenantId}/                  # 租户 workspace
+        ├── skills/                   # 租户私有 Skill
+        ├── .overlay/                 # overlay 标记目录（与 skills 平级）
+        │   ├── weather_skill.override   # 空文件，表示已覆盖 weather_skill
+        │   └── search_skill.override    # 空文件，表示已覆盖 search_skill
+        ├── tmp/
+        ├── checkpoints/
+        ├── team_memory/
+        └── todo/
+```
+
+**设计理由：**
+- `.overlay/` 目录以 `.` 开头，与 SkillManager 的 `SKILL.md` 扫描逻辑不冲突（SkillManager 只扫描包含 `SKILL.md` 的子目录）
+- 标记文件为空文件，仅通过文件存在性判断覆盖状态，不存储额外数据
+- overlay 标记与租户 Skill 目录平级，便于整体清理（删除租户目录时 overlay 标记一并删除）
+
+#### 6.3.2 overlay 迁移策略
+
+**旧部署迁移问题：** 已有部署中租户可能已通过隐式同名覆盖（当前 SkillTool 的双层查找逻辑）覆盖了公共 Skill。切换到 OverlaySkillManager 后，需要为这些隐式覆盖创建显式 overlay 标记。
+
+**迁移方案：**
+
+1. **启动时自动迁移（推荐）：** 在 `OverlaySkillManager` 初始化时，扫描租户 Skill 目录，对每个与公共 Skill 同名的租户私有 Skill 自动创建 `.override` 标记文件
+2. **手动迁移：** 业务方手动执行一次性迁移脚本，为每个已知覆盖创建标记文件
+3. **无迁移（零覆盖状态）：** 新部署无需迁移，所有租户初始无覆盖
+
+**自动迁移实现：**
+
+```java
+// OverlaySkillManager 构造时执行
+private void migrateImplicitOverrides() {
+    Set<String> publicSkillNames = publicSkillManager.getAllInOrder()
+        .stream().map(Skill::getName).collect(Collectors.toSet());
+    
+    for (Skill tenantSkill : tenantSkillManager.getAllInOrder()) {
+        if (publicSkillNames.contains(tenantSkill.getName())) {
+            // 租户私有 Skill 与公共 Skill 同名 → 创建 overlay 标记
+            if (!isOverridden(tenantSkill.getName())) {
+                createOverlayMarker(tenantSkill.getName());
+            }
+        }
+    }
+}
+```
+
+**迁移安全性：**
+- 自动迁移仅在 overlay 标记不存在时创建，不会覆盖已有标记
+- 迁移是幂等操作，重复执行不会产生副作用
+- 迁移完成后，隐式覆盖变为显式覆盖，后续可通过 `revokeOverride()` 撤销
+
 ### 6.4 Skill 同步与热加载
 
 **方案 B+D 的热加载机制：**
@@ -857,6 +1016,8 @@ Step 4: 公共 Skill 热加载
 | **P2** | BaseDbStore SQL 层 tenant_id 列改造 | MessageManager, ScopeUserMappingManager | 中 |
 | **P2** | 租户数据归档/迁移工具 | 新增工具类 | 中 |
 | **P2** | 统一切换入口，迁移现有调用点到 TenantResourceStore | 全局 | 大 |
+| **P2** | 租户资源计量接口 TenantResourceMetrics | 新增接口 + 各资源实现 | 中 |
+| **P2** | BaseKVStore 接口补充 close() 方法 | BaseKVStore, InMemoryKVStore, RedisStore | 小 |
 
 ### 7.2 关键设计原则
 
@@ -866,6 +1027,80 @@ Step 4: 公共 Skill 热加载
 4. **存储介质可替换**：通过 SPI 和配置实现按资源类型选择存储后端
 5. **安全纵深防御**：路径隔离 + KV 前缀隔离 + SQL tenant_id 列，三层防护互为补充
 6. **资源清理由业务方触发**：本服务提供清理接口，不由本服务主动触发
+7. **异步场景显式传播**：不依赖 InheritableThreadLocal 自动继承，所有异步路径显式捕获 + bind/unbind
+
+---
+
+## 八、异步场景下的租户上下文传播机制
+
+### 8.1 传播策略分层
+
+| 执行路径 | 传播机制 | 代码位置 | 风险 |
+|----------|---------|---------|------|
+| 同步阻塞调用 | try/finally bind/unbind | `DeepAgent.invoke()`、`RunnerImpl.runAgent()` | **低** — 上下文在同一线程上 |
+| 同步流式调用 | `TenantUnbindIterator` 包装器，延迟到迭代器耗尽时 unbind | `RunnerImpl.wrapTenantUnbindIterator()` | **低** — 迭代器耗尽/异常时 unbind |
+| Reactor 异步调用 | 显式捕获 TenantContext + `fromCallable` / `deferWithSessionCleanup` | `RunnerImpl.runAgentAsync()`、`runAgentStreamingAsync()` | **低** — boundedElastic 线程上手动 bind/unbind |
+| `new Thread()` 子线程 | `InheritableThreadLocal` 自动继承 | `DeepAgent.stream()` 中创建守护线程 | **低** — 子线程创建时复制父线程值 |
+| `ExecutorService` 线程池复用 | **依赖 try/finally 清除**，无自动传播 | — | **中** — 复用线程不重新继承，需每次显式设置 |
+| `CompletableFuture.supplyAsync()` | **未覆盖** | — | **高** — 如引入，租户上下文会丢失 |
+| `@Async`（Spring） | **未覆盖** | 项目不依赖 Spring | **高** — 如集成 Spring，上下文不传播 |
+
+### 8.2 InheritableThreadLocal 的已知限制
+
+`TenantContextHolder` 使用 `InheritableThreadLocal`，其特性如下：
+
+- ✅ **`new Thread()` 创建的子线程自动继承**父线程的 TenantContext
+- ❌ **线程池复用的线程不会重新继承**——线程第一次创建时继承，后续复用时保留旧值（除非 finally 中 `clearCurrentTenant()` 正确执行）
+- ❌ **Reactor `Schedulers.boundedElastic()` 不继承**——Reactor 线程池线程不是通过 `new Thread()` 创建的
+- ❌ **`CompletableFuture` 默认 ForkJoinPool 不继承**
+
+### 8.3 当前传播保障措施
+
+1. **所有入口方法均使用 try/finally 模式：** `setCurrentTenant()` → 执行 → `clearCurrentTenant()`，确保线程池复用时上下文不残留
+2. **异步方法显式捕获：** `TenantContext captured = resolved;` 在 callable/defer 内手动 bind/unbind
+3. **流式方法延迟 unbind：** `TenantUnbindIterator` 在 `hasNext() == false` 或异常时才 unbind
+4. **Reactor doFinally 保障：** `deferWithSessionCleanup` 在 COMPLETE/ERROR/CANCEL 三种终态下都触发清理
+
+### 8.4 新增异步路径的接入规范
+
+任何新增异步执行路径必须遵循以下规范：
+
+1. **显式捕获 TenantContext** 为局部变量，不依赖 ThreadLocal
+2. **在异步任务开始时 bindTenantContext(captured)**
+3. **在异步任务结束时（包括异常）unbindTenantContext()**
+4. **提供 UT 测试覆盖异步场景的租户隔离**
+
+```java
+// 规范模板
+TenantContext captured = TenantContextHolder.getCurrentTenant();
+executor.submit(() -> {
+    try {
+        TenantContextHolder.setCurrentTenant(captured);
+        // 业务逻辑
+    } finally {
+        TenantContextHolder.clearCurrentTenant();
+    }
+});
+```
+
+### 8.5 与 SessionContextHolder 的不一致
+
+`SessionContextHolder` 使用普通 `ThreadLocal`（非 `InheritableThreadLocal`），与 `TenantContextHolder` 的设计不一致。当前 Session 上下文在 `new Thread()` 子线程中不会自动传播。
+
+**风险评估：** 低——Session 上下文通过 `AgentSessionApi` 对象传递（非 ThreadLocal），ReActAgent 内部使用注入的 session 对象而非 ThreadLocal。
+
+**后续优化方向（P2）：** 考虑将 `SessionContextHolder` 也改为 `InheritableThreadLocal`，或引入统一的 `ContextPropagator` 工具类。
+
+### 8.6 不引入通用 ContextPropagator 的理由
+
+项目中不存在通用 `ContextPropagator` 或 `ThreadContextPropagator`。当前选择散布式 bind/unbind 而非统一传播框架的理由：
+
+1. **项目不依赖 Spring/Reactor Context**——Reactor 的 `contextWrite()` 可自动传播，但项目仅部分使用 Reactor
+2. **传播路径有限**——当前只有 4 种执行路径，散布式管理足够
+3. **显式传播更安全**——避免隐式传播带来的难以调试的上下文丢失问题
+4. **引入 ContextPropagator 需要侵入性改造**——需要修改所有异步 API 签名
+
+**如未来异步路径增多（超过 6 种），建议引入 `TenantContextPropagator` 统一管理。**
 
 ---
 
