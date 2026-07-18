@@ -11,7 +11,7 @@
 | 里程碑 | 范围 | 预估工作量 | 前置依赖 |
 |--------|------|-----------|---------|
 | **M1: P0 路径修复** | 修复 tenantId 路径重复 + PersistenceCheckpointer tenantId 前缀 | 小 | 无 |
-| **M2: P1 Todo 显式隔离+SPI** | TodoStorage SPI + RedisTodoStorage + TodoTool 改造 + Todo 显式租户感知 | 中 | M1 |
+| **M2: P1 Todo 显式隔离+SPI** | TodoStorage SPI + KvTodoStorage 复用 + TodoTool 改造 + Todo 显式租户感知 | 中 | M1 |
 | **M3: P1 OverlaySkillManager** | OverlaySkillManager + 显式覆盖/可撤销 + SkillTool 改造 | 中 | M1 |
 | **M4: P1 Tmp TTL 清理** | TmpFileCleaner + TenantResourceCleaner 接口 | 小 | M1 |
 | **M5: P2 统一存储抽象** | TenantResourceStore + 适配 + 迁移 + VectorStore/DB 隔离 | 大 | M2, M3, M4 |
@@ -130,53 +130,72 @@
 |---|------|------|------|
 | 1 | 新增 TodoStorageProvider | `TodoStorageProvider.java` | SPI 接口 |
 | 2 | 新增 FileTodoStorageProvider | `FileTodoStorageProvider.java` | 内置 file 实现 |
-| 3 | 新增 RedisTodoStorage | `RedisTodoStorage.java` | 基于 BaseKVStore 的 Redis 实现，租户感知 key |
-| 4 | 新增 RedisTodoStorageProvider | `RedisTodoStorageProvider.java` | Redis Provider，复用 KVStoreFactory |
-| 5 | 新增 TodoStorageFactory | `TodoStorageFactory.java` | 工厂类，ServiceLoader 发现 |
-| 6 | 改造 TodoTool | `TodoTool.java` | 新增 fromConfig()，TenantAware 解析路径 |
-| 7 | 改造 FileTodoStorage | `FileTodoStorage.java` | 增加 TenantAware 路径解析 |
-| 8 | 新增 SPI Service 文件 | `META-INF/services/...TodoStorageProvider` | 注册 FileTodoStorageProvider + RedisTodoStorageProvider |
-| 9 | DeepAgentConfig 增加配置 | `DeepAgentConfig.java` | todoStorageType（默认"file"）+ todoStorageConfig（Map） |
-| 10 | YAML 配置集成 | RunnerConfig / YAML | todo.storage.type + todo.storage.config 节点 |
+| 3 | 新增 KvTodoStorageProvider | `KvTodoStorageProvider.java` | KV 抽象层 Provider，复用已有 KvTodoStorage + KVStoreFactory，介质由 kvStoreConfig 决定 |
+| 4 | 新增 TodoStorageFactory | `TodoStorageFactory.java` | 工厂类，ServiceLoader 发现 |
+| 5 | 改造 TodoTool | `TodoTool.java` | 新增 fromConfig()，TenantAware 解析路径 |
+| 6 | 改造 FileTodoStorage | `FileTodoStorage.java` | 增加 TenantAware 路径解析 |
+| 7 | 新增 SPI Service 文件 | `META-INF/services/...TodoStorageProvider` | 注册 FileTodoStorageProvider + KvTodoStorageProvider |
+| 8 | DeepAgentConfig 增加配置 | `DeepAgentConfig.java` | todoStorageType（默认"file"，可选"kv"），KV 存储介质由 kvStoreConfig 统一决定 |
+| 9 | 修改 TaskPlanningRail | `TaskPlanningRail.java` | TodoTool 创建逻辑适配新 SPI，kv 模式复用 DeepAgent.kvStore |
+| 10 | RunnerImpl 共享 BaseKVStore | `RunnerImpl.java` | kvStoreConfig 创建的 BaseKVStore 实例共享给 PersistenceCheckpointer 和 KvTodoStorage |
 
-**Redis 存储 key 格式：**
+**设计要点：KvTodoStorage 已存在，无需新建 RedisTodoStorage**
+
+`KvTodoStorage` 已基于 `BaseKVStore` SPI + `TenantKVStoreKeyResolver` 实现了存储介质无关的 KV 存储。传入 `RedisStore`（`extends BaseKVStore`）即为 Redis 模式。新增的 `KvTodoStorageProvider` 按**抽象层**分（file/kv），介质选择下沉到 `KVStoreFactory`。
+
+**KV 存储 key 格式（与 PersistenceCheckpointer 一致）：**
 
 | 场景 | key 格式 | 示例 |
 |------|---------|------|
-| 无租户 | `todo:{sessionId}` | `todo:sess-abc123` |
-| 有租户 `dept01` | `dept01:todo:{sessionId}` | `dept01:todo:sess-abc123` |
+| 无租户 | `{sessionId}:todo` | `sess-abc123:todo` |
+| 有租户 `dept01` | `dept01:{sessionId}:todo` | `dept01:sess-abc123:todo` |
 
-key 隔离通过 `TenantKVStoreKeyResolver.resolveKey("todo:" + sessionId)` 实现，与 PersistenceCheckpointer 隔离方式一致。
+租户前缀通过 `TenantKVStoreKeyResolver.resolveKey()` 自动添加，与 PersistenceCheckpointer 的 key 隔离方式完全一致。
 
-**配置方式：**
+**配置方式（与 Checkpointer 共享 kvStoreConfig）：**
 
 Java Config:
 ```java
 DeepAgentConfig config = DeepAgentConfig.builder()
-        .todoStorageType("redis")
-        .todoStorageConfig(Map.of("kvStoreType", "redis", "host", "redis.example.com", "port", "6379"))
+        .todoStorageType("kv")                          // "file" | "kv"
+        .kvStoreConfig(Map.of(                          // 与 Checkpointer 共享
+            "type", "redis",
+            "conf", Map.of("connection", Map.of("url", "redis://redis.example.com:6379"))
+        ))
         .build();
 ```
 
 YAML:
 ```yaml
+kvStoreConfig:                    # 唯一入口，Checkpointer + Todo 共用
+  type: redis
+  conf:
+    connection:
+      url: redis://127.0.0.1:6379
+
 todo:
   storage:
-    type: redis
-    config:
-      kvStoreType: redis
-      host: redis.example.com
-      port: 6379
+    type: kv                       # file | kv（kv 模式下介质由 kvStoreConfig 决定）
 ```
+
+**与 Checkpointer 共享 BaseKVStore 实例：**
+
+```
+kvStoreConfig → KVStoreFactory.create("redis", conf) → RedisStore (共享实例)
+    ├── PersistenceCheckpointer(sharedRedisStore)     ← Checkpointer 复用
+    └── KvTodoStorage(sharedRedisStore)               ← Todo 复用
+```
+
+一套 Redis 连接、一套配置、一个共享实例，Checkpointer 和 Todo 自然打通。
 
 **与 issue34（TodoTool Support Redis）需求对应关系：**
 
 | issue34 需求 | 实施项 | 覆盖 |
 |-------------|-------|------|
-| 多实例共享 Todo 数据 | RedisTodoStorage — 多实例通过 Redis 共享 | ✅ |
-| 利用框架已有的 Redis 能力 | RedisTodoStorageProvider 复用 KVStoreFactory + BaseKVStore + RedisKVStoreProvider | ✅ |
-| 存储抽象层可扩展 | TodoStorageProvider SPI + TodoStorageFactory | ✅ |
-| 租户数据隔离 | RedisTodoStorage.resolveKey() 使用 TenantKVStoreKeyResolver | ✅ |
+| 多实例共享 Todo 数据 | KvTodoStorage(RedisStore) — 多实例通过 Redis 共享 | ✅ |
+| 利用框架已有的 Redis 能力 | KvTodoStorageProvider 通过 KVStoreFactory 复用 BaseKVStore + RedisKVStoreProvider，与 PersistenceCheckpointer 共享同一 RedisStore 实例 | ✅ |
+| 存储抽象层可扩展 | TodoStorageProvider SPI + TodoStorageFactory，按抽象层（file/kv）分 Provider | ✅ |
+| 租户数据隔离 | KvTodoStorage.buildKey() 使用 TenantKVStoreKeyResolver，与 PersistenceCheckpointer 隔离方式一致 | ✅ |
 
 ### 3.2 UT 测试用例
 
@@ -186,79 +205,83 @@ todo:
 |---------|---------|---------|
 | UT-M2-001 | `testFileProvider_typeName` | typeName() 返回 "file" |
 | UT-M2-002 | `testFileProvider_createWithBasePath` | create() 返回 FileTodoStorage 实例 |
-| UT-M2-003 | `testRedisProvider_typeName` | typeName() 返回 "redis" |
-| UT-M2-004 | `testRedisProvider_createWithKvStore` | create() 返回 RedisTodoStorage 实例 |
+| UT-M2-003 | `testKvProvider_typeName` | typeName() 返回 "kv" |
+| UT-M2-004 | `testKvProvider_createWithKvStore` | create() 返回 KvTodoStorage 实例 |
+| UT-M2-005 | `testKvProvider_delegatesToKVStoreFactory` | KvTodoStorageProvider 通过 KVStoreFactory.create() 获取 BaseKVStore |
 
 #### 3.2.2 TodoStorageFactoryTest（新增）
 
 | 用例 ID | 用例名称 | 测试要点 |
 |---------|---------|---------|
-| UT-M2-005 | `testCreate_fileType` | create("file", conf) 返回 FileTodoStorage |
-| UT-M2-006 | `testCreate_redisType` | create("redis", conf) 返回 RedisTodoStorage |
-| UT-M2-007 | `testCreate_unknownType_throws` | create("unknown", conf) 抛出 IllegalArgumentException |
-| UT-M2-008 | `testHasProvider_file` | hasProvider("file") 返回 true |
-| UT-M2-009 | `testHasProvider_redis` | hasProvider("redis") 返回 true |
-| UT-M2-010 | `testHasProvider_unknown` | hasProvider("unknown") 返回 false |
-| UT-M2-011 | `testRegister_customProvider` | register() 注入自定义 Provider 后 hasProvider 返回 true |
-| UT-M2-012 | `testCreate_nullConf_usesEmptyMap` | create("file", null) 不抛异常 |
+| UT-M2-006 | `testCreate_fileType` | create("file", conf) 返回 FileTodoStorage |
+| UT-M2-007 | `testCreate_kvType` | create("kv", conf) 返回 KvTodoStorage |
+| UT-M2-008 | `testCreate_unknownType_throws` | create("unknown", conf) 抛出 IllegalArgumentException |
+| UT-M2-009 | `testHasProvider_file` | hasProvider("file") 返回 true |
+| UT-M2-010 | `testHasProvider_kv` | hasProvider("kv") 返回 true |
+| UT-M2-011 | `testHasProvider_unknown` | hasProvider("unknown") 返回 false |
+| UT-M2-012 | `testRegister_customProvider` | register() 注入自定义 Provider 后 hasProvider 返回 true |
+| UT-M2-013 | `testCreate_nullConf_usesEmptyMap` | create("file", null) 不抛异常 |
 
-#### 3.2.3 RedisTodoStorageTest（新增）
+#### 3.2.3 KvTodoStorageTest（修改现有，补充租户隔离用例）
 
 | 用例 ID | 用例名称 | 测试要点 |
 |---------|---------|---------|
-| UT-M2-013 | `testLoad_emptySession_returnsEmptyList` | KV 中无数据时返回空列表 |
-| UT-M2-014 | `testSaveThenLoad_returnsItems` | save 后 load 返回相同 TodoItem 列表 |
-| UT-M2-015 | `testSaveOverwrites_previousData` | 二次 save 覆盖前一次数据 |
-| UT-M2-016 | `testDelete_removesData` | delete 后 load 返回空列表 |
-| UT-M2-017 | `testResolveKey_noTenant` | 无租户时 key 格式为 `todo:{sessionId}` |
-| UT-M2-018 | `testResolveKey_withTenant` | 有租户时 key 格式为 `tenantId:todo:{sessionId}` |
-| UT-M2-019 | `testTenantIsolation_sameSession_differentTenants` | 同一 sessionId 在不同租户下数据独立 |
-| UT-M2-020 | `testNullKvStore_throwsNPE` | 构造时传入 null kvStore 抛出 NPE |
-| UT-M2-021 | `testLoad_blankJson_returnsEmptyList` | KV 中存储空白 JSON 时返回空列表 |
-| UT-M2-022 | `testSave_multipleItems` | 保存多个 TodoItem 后全部可加载 |
+| UT-M2-014 | `testLoad_emptySession_returnsEmptyList` | KV 中无数据时返回空列表 |
+| UT-M2-015 | `testSaveThenLoad_returnsItems` | save 后 load 返回相同 TodoItem 列表 |
+| UT-M2-016 | `testSaveOverwrites_previousData` | 二次 save 覆盖前一次数据 |
+| UT-M2-017 | `testDelete_removesData` | delete 后 load 返回空列表 |
+| UT-M2-018 | `testBuildKey_noTenant` | 无租户时 key 格式为 `{sessionId}:todo` |
+| UT-M2-019 | `testBuildKey_withTenant` | 有租户时 key 格式为 `tenantId:{sessionId}:todo` |
+| UT-M2-020 | `testTenantIsolation_sameSession_differentTenants` | 同一 sessionId 在不同租户下数据独立 |
+| UT-M2-021 | `testNullKvStore_throwsNPE` | 构造时传入 null kvStore 抛出 NPE |
+| UT-M2-022 | `testLoad_blankJson_returnsEmptyList` | KV 中存储空白 JSON 时返回空列表 |
+| UT-M2-023 | `testSave_multipleItems` | 保存多个 TodoItem 后全部可加载 |
+| UT-M2-024 | `testKvTodoStorage_withRedisStore` | 传入 RedisStore 时 CRUD 正常（验证 BaseKVStore 多态） |
+| UT-M2-025 | `testKvTodoStorage_withInMemoryKVStore` | 传入 InMemoryKVStore 时 CRUD 正常 |
 
 #### 3.2.4 TenantAwareFileTodoStorageTest（新增）
 
 | 用例 ID | 用例名称 | 测试要点 |
 |---------|---------|---------|
-| UT-M2-023 | `testSave_noTenant_defaultPath` | 无租户时保存在 baseWorkspacePath/todo/{sessionId}/todo.json |
-| UT-M2-024 | `testSave_withTenant_tenantPath` | 有租户时保存在 tenants/{tenantId}/todo/{sessionId}/todo.json |
-| UT-M2-025 | `testLoad_noTenant` | 无租户时从默认路径读取 |
-| UT-M2-026 | `testLoad_withTenant` | 有租户时从租户路径读取 |
-| UT-M2-027 | `testTenantIsolation_fileBased` | 不同租户文件不互相可见 |
-| UT-M2-028 | `testDelete_noTenant` | 无租户删除默认路径 |
-| UT-M2-029 | `testDelete_withTenant` | 有租户删除租户路径 |
+| UT-M2-026 | `testSave_noTenant_defaultPath` | 无租户时保存在 baseWorkspacePath/todo/{sessionId}/todo.json |
+| UT-M2-027 | `testSave_withTenant_tenantPath` | 有租户时保存在 tenants/{tenantId}/todo/{sessionId}/todo.json |
+| UT-M2-028 | `testLoad_noTenant` | 无租户时从默认路径读取 |
+| UT-M2-029 | `testLoad_withTenant` | 有租户时从租户路径读取 |
+| UT-M2-030 | `testTenantIsolation_fileBased` | 不同租户文件不互相可见 |
+| UT-M2-031 | `testDelete_noTenant` | 无租户删除默认路径 |
+| UT-M2-032 | `testDelete_withTenant` | 有租户删除租户路径 |
 
 #### 3.2.5 TodoToolFromConfigTest（新增）
 
 | 用例 ID | 用例名称 | 测试要点 |
 |---------|---------|---------|
-| UT-M2-030 | `testFromConfig_fileType` | fromConfig("file", conf) 返回使用 FileTodoStorage 的 TodoTool |
-| UT-M2-031 | `testFromConfig_redisType` | fromConfig("redis", conf) 返回使用 RedisTodoStorage 的 TodoTool |
-| UT-M2-032 | `testLegacyConstructor_fileStorage` | new TodoTool(workspace) 使用 FileTodoStorage |
-| UT-M2-033 | `testStorageConstructor_customStorage` | new TodoStorage(customStorage) 使用传入的实现 |
-| UT-M2-034 | `testTodoCRUD_viaFileConfig` | 通过 fromConfig 创建的 file 模式 TodoTool CRUD 正常 |
-| UT-M2-035 | `testTodoCRUD_viaRedisConfig` | 通过 fromConfig 创建的 redis 模式 TodoTool CRUD 正常 |
-| UT-M2-036 | `testFromConfig_redisWithYamlConfig` | YAML 配置解析后 fromConfig 创建 Redis 模式正常 |
-| UT-M2-037 | `testFromConfig_defaultType_isFile` | 不配置 todoStorageType 时默认使用 file |
-| UT-M2-038 | `testRedisTodoStorage_resolvesKeyViaTenantKVStoreKeyResolver` | 验证 key 通过 TenantKVStoreKeyResolver 生成，无租户时无前缀 |
-| UT-M2-039 | `testRedisTodoStorage_resolvesKeyWithTenantPrefix` | 有租户时 key 自动加 tenantId: 前缀 |
-| UT-M2-040 | `testRedisTodoStorageProvider_reusesKVStoreFactory` | 验证 RedisTodoStorageProvider 通过 KVStoreFactory 获取 BaseKVStore |
-| UT-M2-041 | `testTodoStorageFactory_serviceLoaderDiscoversProviders` | ServiceLoader 自动发现 file 和 redis 两个 Provider |
+| UT-M2-033 | `testFromConfig_fileType` | fromConfig("file", conf) 返回使用 FileTodoStorage 的 TodoTool |
+| UT-M2-034 | `testFromConfig_kvType` | fromConfig("kv", conf) 返回使用 KvTodoStorage 的 TodoTool |
+| UT-M2-035 | `testLegacyConstructor_fileStorage` | new TodoTool(workspace) 使用 FileTodoStorage |
+| UT-M2-036 | `testStorageConstructor_customStorage` | new TodoStorage(customStorage) 使用传入的实现 |
+| UT-M2-037 | `testTodoCRUD_viaFileConfig` | 通过 fromConfig 创建的 file 模式 TodoTool CRUD 正常 |
+| UT-M2-038 | `testTodoCRUD_viaKvConfig` | 通过 fromConfig 创建的 kv 模式（InMemoryKVStore）TodoTool CRUD 正常 |
+| UT-M2-039 | `testFromConfig_kvWithSharedKvStore` | kv 模式复用 DeepAgent.kvStore 共享实例 |
+| UT-M2-040 | `testFromConfig_defaultType_isFile` | 不配置 todoStorageType 时默认使用 file |
+| UT-M2-041 | `testKvTodoStorage_resolvesKeyViaTenantKVStoreKeyResolver` | 验证 key 通过 TenantKVStoreKeyResolver 生成，无租户时无前缀 |
+| UT-M2-042 | `testKvTodoStorage_resolvesKeyWithTenantPrefix` | 有租户时 key 自动加 tenantId: 前缀 |
+| UT-M2-043 | `testKvTodoStorageProvider_reusesKVStoreFactory` | 验证 KvTodoStorageProvider 通过 KVStoreFactory 获取 BaseKVStore |
+| UT-M2-044 | `testTodoStorageFactory_serviceLoaderDiscoversProviders` | ServiceLoader 自动发现 file 和 kv 两个 Provider |
+| UT-M2-045 | `testTaskPlanningRail_kvMode_usesSharedKvStore` | TaskPlanningRail 创建 TodoTool 时 kv 模式复用 DeepAgent.kvStore |
 
 ### 3.3 ST 系统测试用例
 
 | 用例 ID | 用例名称 | 前置条件 | 操作步骤 | 预期结果 |
 |---------|---------|---------|---------|---------|
 | ST-M2-001 | TodoTool File 模式多租户隔离 | 配置 todoStorageType=file | tenantA 创建 Todo，tenantB 创建 Todo | 各自 Todo 文件在独立路径下，互不可见 |
-| ST-M2-002 | TodoTool Redis 模式多实例共享 | 配置 todoStorageType=redis，启动两个 Agent 实例 | 实例1 创建 Todo，实例2 读取 | 实例2 可读到实例1 创建的 Todo 数据 |
-| ST-M2-003 | TodoTool Redis 模式多租户隔离 | 配置 todoStorageType=redis | tenantA 和 tenantB 各创建 Todo | Redis key 按租户前缀隔离，A 无法读取 B 的 Todo |
-| ST-M2-004 | TodoTool 从 File 切换到 Redis | 先用 file 模式运行一段时间 | 修改配置切换为 redis 模式 | 新 Todo 写入 Redis，旧 file 数据不受影响（不自动迁移） |
+| ST-M2-002 | TodoTool KV+Redis 模式多实例共享 | 配置 todoStorageType=kv + kvStoreConfig=redis，启动两个 Agent 实例 | 实例1 创建 Todo，实例2 读取 | 实例2 可读到实例1 创建的 Todo 数据（通过共享 Redis） |
+| ST-M2-003 | TodoTool KV+Redis 模式多租户隔离 | 配置 todoStorageType=kv + kvStoreConfig=redis | tenantA 和 tenantB 各创建 Todo | Redis key 按租户前缀隔离，A 无法读取 B 的 Todo |
+| ST-M2-004 | TodoTool 从 File 切换到 KV 模式 | 先用 file 模式运行一段时间 | 修改配置切换为 kv 模式 | 新 Todo 写入 KV，旧 file 数据不受影响（不自动迁移） |
 | ST-M2-005 | TodoTool SPI 自定义扩展 | 实现 CustomTodoStorageProvider | 配置 todoStorageType=custom | TodoTool 使用自定义存储实现 |
-| ST-M2-006 | DeepAgent 集成 Redis Todo | 配置 DeepAgentConfig.todoStorageType=redis | 启动 DeepAgent 执行工作流 | 工作流中 TodoTool 使用 Redis 存储，session 结束后数据可查 |
-| ST-M2-007 | YAML 配置切换存储介质 | YAML 中配置 todo.storage.type=redis | 重启服务 | TodoTool 自动使用 Redis 存储，无需改代码 |
-| ST-M2-008 | Redis 模式多租户 key 前缀验证 | 配置 todoStorageType=redis | tenantA 和 tenantB 各创建同 sessionId 的 Todo | Redis 中 key 分别为 `tenantA:todo:session-1` 和 `tenantB:todo:session-1`，互不干扰 |
-| ST-M2-009 | File→Redis 模式切换后旧数据不可见 | File 模式运行产生 Todo 数据 | 切换到 Redis 模式后读取同 sessionId | 旧 File 数据不自动迁移，Redis 中为空（符合预期，需业务方自行迁移） |
+| ST-M2-006 | DeepAgent 集成 KV Todo + 共享 RedisStore | 配置 todoStorageType=kv + kvStoreConfig=redis | 启动 DeepAgent 执行工作流 | 工作流中 TodoTool 和 PersistenceCheckpointer 共享同一 RedisStore 实例 |
+| ST-M2-007 | YAML 配置 kvStoreConfig 共享 | YAML 中配置 kvStoreConfig.type=redis + todo.storage.type=kv | 重启服务 | TodoTool 和 Checkpointer 自动使用同一 Redis 存储，无需改代码 |
+| ST-M2-008 | KV 模式多租户 key 前缀验证 | 配置 todoStorageType=kv + kvStoreConfig=redis | tenantA 和 tenantB 各创建同 sessionId 的 Todo | Redis 中 key 分别为 `tenantA:session-1:todo` 和 `tenantB:session-1:todo`，互不干扰 |
+| ST-M2-009 | File→KV 模式切换后旧数据不可见 | File 模式运行产生 Todo 数据 | 切换到 KV 模式后读取同 sessionId | 旧 File 数据不自动迁移，KV 中为空（符合预期，需业务方自行迁移） |
 
 ---
 
@@ -430,7 +453,7 @@ todo:
 
 | 依赖 | 用途 |
 |------|------|
-| Redis 实例 | RedisTodoStorage、PersistenceCheckpointer 测试 |
+| Redis 实例 | KvTodoStorage（kv+redis 模式）、PersistenceCheckpointer 测试 |
 | 本地文件系统 | FileTodoStorage、路径结构验证 |
 | OBS/S3 Mock | 分层存储验证 |
 
@@ -456,7 +479,7 @@ mvn verify -P integration-test
 | 里程碑 | 验收标准 |
 |--------|---------|
 | **M1** | 1. 路径中 tenantId 不再重复；2. 无租户场景所有路径与修改前一致；3. PersistenceCheckpointer KV key 带租户前缀；4. 全部 UT 通过 |
-| **M2** | 1. TodoTool 支持 file/redis 两种存储；2. Redis 模式多实例数据共享；3. Todo 显式租户隔离；4. SPI 可扩展；5. 全部 UT 通过 |
+| **M2** | 1. TodoTool 支持 file/kv 两种存储模式；2. kv 模式通过 KVStoreFactory 可对接 Redis/InMemory 等任意 BaseKVStore；3. kv 模式与 PersistenceCheckpointer 共享同一 BaseKVStore 实例；4. Todo 显式租户隔离；5. SPI 可扩展；6. 全部 UT 通过 |
 | **M3** | 1. OverlaySkillManager 双层查找正确；2. 显式覆盖/可撤销功能正常；3. 热加载兼容；4. 全部 UT 通过 |
 | **M4** | 1. Tmp 文件超 TTL 自动清理；2. TenantResourceCleaner 接口可用；3. 清理不影响公共资源；4. 全部 UT 通过 |
 | **M5** | 1. 统一存储抽象接口定义完成；2. 现有资源适配完成；3. VectorStore/DB 隔离完成；4. 全部 UT 通过 |
