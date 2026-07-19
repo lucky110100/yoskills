@@ -3,7 +3,7 @@
 > 基于文档：agent-core-java-multitenant-resource-brainstorming.md（已核对版）
 > 编写日期：2026-07-16
 > 项目：agent-core-java
-> 最后更新：2026-07-18（实施完成状态更新）
+> 最后更新：2026-07-19（P1 补齐完成状态更新）
 
 ---
 
@@ -29,7 +29,7 @@
 | # | 变更 | 文件 | 说明 | 状态 |
 |---|------|------|------|------|
 | 1 | 修改 PATH_DEFAULT | `TenantNamespaceFactories.java` | 租户时返回 `tenants/{tenantId}`，无租户返回空串 | ✅ |
-| 2 | 重写 TenantWorkspaceResolver | `TenantWorkspaceResolver.java` | `tenants/{tenantId}/` 即 workspace，新增 resolveTeamMemoryDir/resolveTodoDir；initializeTenantSpace() 增加创建 todo/.overlay 子目录 | ✅ |
+| 2 | 重写 TenantWorkspaceResolver | `TenantWorkspaceResolver.java` | 租户时返回 `tenants/{tenantId}/workspace`（workspace 为子目录），新增 resolveTenantRoot()、resolveTeamMemoryDir/resolveTodoDir；initializeTenantSpace() 增加创建 todo/.overlay 子目录 | ✅ |
 | 3 | 修改 WorkspaceType | `WorkspaceType.java` | 新增 TODO，WORKSPACE 的 subDirectory 为空串 | ✅ |
 | 4 | 修改 LocalWorkspaceStore | `LocalWorkspaceStore.java` | 处理空 subDirectory，createDirectories 增加 todo | ✅ |
 | 5 | 修改 TieredWorkspaceManager | `TieredWorkspaceManager.java` | 适配新路径结构，去掉 tenantId 参数 | ✅ |
@@ -210,7 +210,7 @@
 | 文件路径 | 里程碑 | 说明 |
 |---------|--------|------|
 | `TenantNamespaceFactories.java` | M1 | PATH_DEFAULT 返回 tenants/{tid} |
-| `TenantWorkspaceResolver.java` | M1+M3 | 重写路径结构 + .overlay 目录 |
+| `TenantWorkspaceResolver.java` | M1+M3+P1 | 重写路径结构 + .overlay 目录 + resolveTenantRoot/workspace 子目录 |
 | `WorkspaceType.java` | M1 | TODO 枚举 + WORKSPACE("") |
 | `WorkspaceStore.java` | M1 | 接口简化去掉 tenantId |
 | `LocalWorkspaceStore.java` | M1 | 适配空 subDirectory |
@@ -223,7 +223,7 @@
 | `SkillTool.java` | M3 | OverlaySkillManager 构造器 |
 | `ListSkillTool.java` | M3 | OverlaySkillManager 构造器 |
 | `DeepAgentConfig.java` | M2+M4 | sessionStoreType + tmpTtl/tmpTtlScanInterval |
-| `DeepAgent.java` | M4 | TmpFileCleaner 生命周期 |
+| `DeepAgent.java` | M4+P1 | TmpFileCleaner 生命周期 + AutoCloseable（close→destroy） |
 
 ### 新增测试文件（14个）
 
@@ -292,15 +292,76 @@
 
 ### 7.3 测试执行命令
 
-```bash
-# 执行全部 UT
-mvn test
-
-# 执行单个里程碑 UT
-mvn test -pl . -Dtest="com.openjiuwen.core.multitenant.**Test"
-mvn test -pl . -Dtest="com.openjiuwen.harness.tools.**Test"
-mvn test -pl . -Dtest="com.openjiuwen.core.singleagent.skills.**Test"
-
-# 执行 ST（需 Redis 等外部依赖）
-mvn verify -P integration-test
 ```
+
+---
+
+## 十、P1 补齐 ✅ 已完成
+
+> 实施日期：2026-07-19
+> P1 补齐：修复 UT 遗漏 + 路径结构修正 + AutoCloseable 生命周期
+
+### 10.1 P1 补齐清单
+
+| # | 项目 | 变更说明 | 状态 |
+|---|------|---------|------|
+| 1 | KvTodoStorageTest 补充 loadBlankJsonReturnsEmptyList | 增加空白 JSON 加载返回空列表的测试 | ✅ |
+| 2 | TenantWorkspaceResolver 路径结构修正 | `resolveWorkspaceRoot` → `tenants/{tid}/workspace`，新增 `resolveTenantRoot()` → `tenants/{tid}`；skills/tmp/checkpoints 等子资源从 tenantRoot 解析而非 workspaceRoot | ✅ |
+| 3 | DeepAgent 实现 AutoCloseable | `implements AutoCloseable`，`close()` 委托给 `destroy()`，RunnerImpl 的 AutoCloseable 逻辑自动调用 destroy→停止 TmpFileCleaner | ✅ |
+| 4 | DeepAgentConfig.todoStorageType 确认 | 已存在（@Builder.Default "file"），无需新增 | ✅ 确认已有 |
+| 5 | DefaultTenantResourceCleaner.cleanupAll 修正 | 从仅删 workspace 改为删整个 tenantRoot + KV 数据 | ✅ |
+| 6 | RunnerImpl.bindTenantContext 修正 | 用 `resolveTenantRoot(ctx)` 替代 `resolveWorkspaceRoot(ctx).getParent()` | ✅ |
+| 7 | DeepAgent.bindTenantWorkspace 修正 | 用 `resolveTenantRoot(ctx)` 替代 `.getParent()` | ✅ |
+
+### 10.2 路径结构变更详述
+
+原始路径结构（M1 实现）:
+```
+baseDir/tenants/{tenantId}/          ← resolveWorkspaceRoot 返回此路径
+    skills/
+    tmp/
+    checkpoints/
+    team_memory/
+    todo/
+    .overlay/
+```
+
+修正后路径结构（P1）:
+```
+baseDir/tenants/{tenantId}/          ← resolveTenantRoot 返回此路径
+    workspace/                       ← resolveWorkspaceRoot 返回此路径
+    skills/
+    tmp/
+    checkpoints/
+    team_memory/
+    todo/
+    .overlay/
+```
+
+变更影响范围：
+- TenantWorkspaceResolver：新增 `resolveTenantRoot()`，`resolveWorkspaceRoot()` 改为 tenantRoot + "workspace"
+- 各 resolve* 方法（skills/tmp/checkpoints/team_memory/todo）改为从 tenantRoot 解析
+- OverlaySkillManagerTest/HotReloadTest：`.overlay` 目录从 resolveTenantRoot 解析
+- TenantTempFileIsolationTest：tempDir.getParent() = tenantRoot（非 workspace）
+- TenantResourceCleanerTest：cleanupWorkspace 只删 workspace 子目录，cleanupAll 删整个 tenantRoot
+- DeepAgent + RunnerImpl：tenantRoot 用 resolveTenantRoot() 获取
+
+### 10.3 受影响文件汇总
+
+| 文件路径 | 变更类型 | 说明 |
+|---------|---------|------|
+| `TenantWorkspaceResolver.java` | 修改 | 新增 resolveTenantRoot，resolveWorkspaceRoot 增加 workspace 子目录 |
+| `DeepAgent.java` | 修改 | implements AutoCloseable + close() + resolveTenantRoot |
+| `DefaultTenantResourceCleaner.java` | 修改 | cleanupAll 用 resolveTenantRoot 删整棵租户树 |
+| `RunnerImpl.java` | 修改 | bindTenantContext 用 resolveTenantRoot |
+| `FileStore.java` | 修改 | 变量名 tenantRoot → tenantWorkspace |
+| `KvTodoStorageTest.java` | 修改 | 新增 loadBlankJsonReturnsEmptyList |
+| `TenantResourceCleanerTest.java` | 修改 | 适配新路径（cleanupWorkspace 只删 workspace，cleanupAll 删 tenantRoot） |
+| `TenantTempFileIsolationTest.java` | 修改 | tempDir.getParent = tenantRoot |
+| `OverlaySkillManagerTest.java` | 修改 | .overlay 从 resolveTenantRoot 解析 |
+| `OverlaySkillManagerHotReloadTest.java` | 修改 | .overlay 从 resolveTenantRoot 解析 |
+| `DeepAgentTenantTest.java` | 修改 | 验证 workspace 路径包含 "workspace" |
+
+### 10.4 UT 验证 ✅ 全部通过
+
+118 个多租户相关测试全部通过（2026-07-19 验证）。
