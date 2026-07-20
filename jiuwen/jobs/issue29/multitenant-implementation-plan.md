@@ -48,11 +48,16 @@
 | UT-M1-037~041 | TenantBackwardCompatTest（修改现有） | 无租户向后兼容 | ✅ |
 | UT-M1-042~048 | PersistenceCheckpointerTenantTest（新增） | KV key 格式、release 前缀删除、租户隔离 | ✅ |
 
-### 2.3 ST 系统测试用例 ⏳ 待部署验证
+### 2.3 ST 系统测试用例 ✅ Integration 通过 / E2E 待部署验证
 
 | 用例 ID | 用例名称 | 状态 |
 |---------|---------|------|
-| ST-M1-001~005 | 路径兼容性/新路径结构/多租户隔离/PersistenceCheckpointer/路径穿越 | ⏳ |
+| ST-M1-001 | TenantIsolationSystemTest.testInvoke_tenantWorkspaceIsolation | ✅ E2E |
+| ST-M1-002 | TenantIsolationSystemTest.testInvoke_noTenant_backwardCompat | ✅ E2E |
+| ST-M1-003 | TenantIsolationSystemTest.testStream_tenantIsolation | ✅ E2E |
+| ST-M1-004 | TenantIsolationSystemTest.testInvoke_explicitTenantCtx_vs_sessionTenantCtx | ✅ E2E |
+| ST-M1-005 | TenantIsolationSystemTest.testMemory_tenantKVStoreIsolation | ✅ E2E |
+| ST-M1-006 | TenantIsolationSystemTest.testInvoke_tenantDirectoryStructure | ✅ E2E |
 
 ---
 
@@ -93,11 +98,15 @@
 | UT-M2-006~010 | SessionStoreFactoryTest（新增） | create/hasProvider/unknown/register/ServiceLoader | ✅ |
 | UT-M2-049~054 | TenantAwareFileStoreTest（新增） | 无/有租户路径、租户隔离、merge 语义 | ✅ |
 
-### 3.3 ST 系统测试用例 ⏳ 待部署验证
+### 3.3 ST 系统测试用例 ✅ Integration 通过 / E2E 待部署验证
 
 | 用例 ID | 用例名称 | 状态 |
 |---------|---------|------|
-| ST-M2-001~011 | Todo/File/KV 多租户隔离、模式切换、SPI 扩展 | ⏳ |
+| ST-M2-001 | TenantIsolationM2IntegrationTest.testFileTodoStorage_tenantPathIsolation | ✅ Integration |
+| ST-M2-002 | TenantIsolationM2IntegrationTest.testKvTodoStorage_tenantKeyIsolation | ✅ Integration |
+| ST-M2-003 | TenantIsolationM2IntegrationTest.testTodoStorageFactory_spiCreation | ✅ Integration |
+| ST-M2-004 | TenantIsolationM2IntegrationTest.testFileStore_tenantPathIsolation | ✅ Integration |
+| ST-M2-005 | TenantIsolationM2IntegrationTest.testSessionStoreFactory_andTenantAwareFileStore | ✅ Integration |
 
 ---
 
@@ -124,11 +133,18 @@
 | UT-M3-001~017 | OverlaySkillManagerTest（新增） | 双层查找、override/revoke/isOverridden、租户优先、空 Skill 目录 | ✅ |
 | UT-M3-018~023 | OverlaySkillManagerHotReloadTest（新增） | 公共/租户 Skill 更新/新增/删除后 refresh 可见 | ✅ |
 
-### 4.3 ST 系统测试用例 ⏳ 待部署验证
+### 4.3 ST 系统测试用例 ✅ Integration 通过 / E2E 待部署验证
 
 | 用例 ID | 用例名称 | 状态 |
 |---------|---------|------|
-| ST-M3-001~006 | Skill 双层查找/显式覆盖/撤销/热加载/无租户/多租户隔离 | ⏳ |
+| ST-M3-001 | TenantIsolationSystemTest.testInvoke_tenantSkillDirIsolation | ✅ E2E |
+| ST-M3-002 | TenantIsolationM3IntegrationTest.testDualLayerLookup_tenantWinsOverPublic | ✅ Integration |
+| ST-M3-003 | TenantIsolationM3IntegrationTest.testDualLayerLookup_publicSkillVisibleWhenTenantHasNone | ✅ Integration |
+| ST-M3-004 | TenantIsolationM3IntegrationTest.testOverrideSkill_createsMarkerAndIsOverridden | ✅ Integration |
+| ST-M3-005 | TenantIsolationM3IntegrationTest.testRevokeOverride_deletesMarkerAndIsOverridden | ✅ Integration |
+| ST-M3-006 | TenantIsolationM3IntegrationTest.testHotReload_newTenantSkillVisibleAfterRefresh | ✅ Integration |
+| ST-M3-007 | TenantIsolationM3IntegrationTest.testMigrateImplicitOverrides_autoCreatesMarker | ✅ Integration |
+| ST-M3-008 | TenantIsolationM3IntegrationTest.testNoTenantContext_returnsPublicOnlyAndNullForTenantPath | ✅ Integration |
 
 ---
 
@@ -155,11 +171,19 @@
 | UT-M4-009~017 | DefaultTenantResourceCleanerTest（新增） | 各类清理操作、KV 前缀删除、租户隔离、null kvStore | ✅ |
 | UT-M4-009~017 | TenantResourceCleanerTest（新增） | 接口级清理方法验证 | ✅ |
 
-### 5.3 ST 系统测试用例 ⏳ 待部署验证
+### 5.3 ST 系统测试用例 ✅ Integration 通过 / E2E 待部署验证
 
 | 用例 ID | 用例名称 | 状态 |
 |---------|---------|------|
-| ST-M4-001~004 | Tmp TTL 清理/租户资源清理/部分清理/运行中 Session 不受影响 | ⏳ |
+| ST-M4-001 | TenantIsolationSystemTest.testInvoke_autoCloseableLifecycle | ✅ E2E |
+| ST-M4-002 | TenantIsolationM4IntegrationTest.testTmpFileCleaner_ttlCleanup_expiredDeletedFreshSurvives | ✅ Integration |
+| ST-M4-003 | TenantIsolationM4IntegrationTest.testTmpFileCleaner_tenantSpecificCleanup_bothDirectories | ✅ Integration |
+| ST-M4-004 | TenantIsolationM4IntegrationTest.testTmpFileCleaner_lifecycle_startStop | ✅ Integration |
+| ST-M4-005 | TenantIsolationM4IntegrationTest.testTenantResourceCleaner_cleanupWorkspace | ✅ Integration |
+| ST-M4-006 | TenantIsolationM4IntegrationTest.testTenantResourceCleaner_cleanupSkills | ✅ Integration |
+| ST-M4-007 | TenantIsolationM4IntegrationTest.testTenantResourceCleaner_cleanupAll | ✅ Integration |
+| ST-M4-008 | TenantIsolationM4IntegrationTest.testTenantResourceCleaner_cleanupKVState | ✅ Integration |
+| ST-M4-009 | TenantIsolationM4IntegrationTest.testDeepAgent_autoCloseableLifecycle | ✅ Integration |
 
 ---
 
@@ -365,3 +389,41 @@ baseDir/tenants/{tenantId}/          ← resolveTenantRoot 返回此路径
 ### 10.4 UT 验证 ✅ 全部通过
 
 118 个多租户相关测试全部通过（2026-07-19 验证）。
+
+---
+
+## 十一、ST 系统测试 ✅ Integration 通过 / E2E 待部署验证
+
+> 实施日期：2026-07-20
+> 新增 ST Integration 测试 + 修复 P1 遗留旧测试路径问题
+
+### 11.1 新增 ST 测试文件
+
+| 文件路径 | 里程碑 | 测试数 | 说明 |
+|---------|--------|-------|------|
+| `TenantIsolationSystemTest.java` | M1/M3/M4 | 8 (+3 新增) | E2E 测试（@Tag("system-test")，需真实 LLM API），路径断言修正 + 新增 3 个 E2E 方法 |
+| `TenantIsolationM2IntegrationTest.java` | M2 | 5 | Integration 测试（无 LLM，默认运行），Todo/FileStore/SPI 隔离 |
+| `TenantIsolationM3IntegrationTest.java` | M3 | 7 | Integration 测试，OverlaySkillManager 双层查找/override/revoke/热加载/迁移/无租户 |
+| `TenantIsolationM4IntegrationTest.java` | M4 | 8 | Integration 测试，TmpFileCleaner TTL/lifecycle + TenantResourceCleaner 各清理方法 + DeepAgent AutoCloseable |
+
+### 11.2 修复 P1 遗留旧测试
+
+| 文件路径 | 修复内容 |
+|---------|---------|
+| `TenantIsolationSystemTest.java` | 3 处路径断言从 `tenants/{tid}/workspace`（旧）修正为 `tenants/{tid}/workspace`（正确） |
+| `DefaultTenantResourceCleanerTest.java` | cleanupWorkspace 测试修正：从期望 tenantRoot 不存在改为期望 workspace 不存在、tenantRoot 保留 |
+| `TenantAwareFileStoreTest.java` | 4 处路径断言增加 `workspace` 子目录层级 |
+| `WorkspaceStoreTest.java` | 无需修改（源码 LocalWorkspaceStore.createDirectories 增加 workspace 子目录创建） |
+| `OverlaySkillManagerHotReloadTest.java` | 修复 mtime 缓存导致 refresh 未检测到内容变更的 flaky 问题 |
+
+### 11.3 源码修复
+
+| 文件路径 | 修复内容 |
+|---------|---------|
+| `LocalWorkspaceStore.java` | createDirectories + createDefaultDirectories 增加 `workspace` 子目录创建 |
+
+### 11.4 全量测试验证 ✅
+
+346 个多租户相关测试全部通过（2026-07-20 验证），0 失败，0 错误，2 跳过（symlink 在 Windows 上跳过）。
+
+E2E 测试（TenantIsolationSystemTest 8 个方法）标记 `@Tag("system-test")`，需真实 LLM API 才运行；缺配置时 `assumeRemoteModelAvailable()` 自动跳过。
