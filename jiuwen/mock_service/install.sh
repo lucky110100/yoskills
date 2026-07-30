@@ -33,7 +33,7 @@ log_warn()  { echo -e "${YELLOW}[WARN]${NC} $*"; }
 log_err()   { echo -e "${RED}[ERROR]${NC} $*"; }
 
 # ==================== 参数解析 ====================
-VENV_DIR="/home/luffy/projects/gitcode/.venv"
+VENV_DIR="${MOCK_VENV:-/home/luffy/projects/gitcode/.venv}"
 CHECK_ONLY=false
 
 while [[ $# -gt 0 ]]; do

@@ -8,8 +8,8 @@ execution:
   entrypoint: ops.sh
   environment:
     MOCK_VENV: "/home/luffy/projects/gitcode/.venv"
-    MOCK_SERVICE_SRC: "/home/luffy/projects/gitcode/JiuwenTest/mock_service"
-    MOCK_LOG_DIR: "/home/luffy/projects/gitcode/JiuwenTest/logs"
+    MOCK_SERVICE_SRC: "/home/luffy/projects/gitcode/jiuwen-test/mock_service"
+    MOCK_LOG_DIR: "/home/luffy/projects/gitcode/jiuwen-test/logs"
 ---
 
 # Mock Service 运维操作
@@ -28,7 +28,7 @@ mock_service 包含5个服务，用于 agent-core 和 agent-core-java 的集成�
 | mcp_sse_server2 | 8189 | FastMCP SSE | MCP SSE 工具服务（乘法+消息） |
 | mcp_sse_server3 | 8190 | FastMCP SSE | MCP SSE 工具服务（空工具） |
 
-**源码位置**：`/home/luffy/projects/gitcode/JiuwenTest/mock_service/`
+**源码位置**：`/home/luffy/projects/gitcode/jiuwen-test/mock_service/`
 
 ## 支持的命令
 
@@ -127,8 +127,8 @@ mcp>=1.0
 | 变量 | 默认值 | 说明 |
 |------|--------|------|
 | `MOCK_VENV` | `/home/luffy/projects/gitcode/.venv` | Python venv 路径 |
-| `MOCK_SERVICE_SRC` | `/home/luffy/projects/gitcode/JiuwenTest/mock_service` | mock_service 源码路径 |
-| `MOCK_LOG_DIR` | `/home/luffy/projects/gitcode/JiuwenTest/logs` | 日志输出目录 |
+| `MOCK_SERVICE_SRC` | `/home/luffy/projects/gitcode/jiuwen-test/mock_service` | mock_service 源码路径 |
+| `MOCK_LOG_DIR` | `/home/luffy/projects/gitcode/jiuwen-test/logs` | 日志输出目录 |
 
 ## 服务架构
 

@@ -40,7 +40,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 # ==================== 路径配置 ====================
-LOG_DIR="/home/luffy/projects/gitcode/JiuwenTest/logs"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+VENV_DIR="${MOCK_VENV:-/home/luffy/projects/gitcode/.venv}"
+MOCK_SERVICE_SRC="${MOCK_SERVICE_SRC:-/home/luffy/projects/gitcode/jiuwen-test/mock_service}"
+LOG_DIR="${MOCK_LOG_DIR:-/home/luffy/projects/gitcode/jiuwen-test/logs}"
 PID_FILE="${LOG_DIR}/mock_services.pid"
 
 PORTS=(8000 8088 8188 8189 8190)

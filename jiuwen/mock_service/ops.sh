@@ -29,8 +29,8 @@ log_err()   { echo -e "${RED}[ERROR]${NC} $*"; }
 
 # ==================== 默认配置 ====================
 VENV_DIR="${MOCK_VENV:-/home/luffy/projects/gitcode/.venv}"
-MOCK_SERVICE_SRC="${MOCK_SERVICE_SRC:-/home/luffy/projects/gitcode/JiuwenTest/mock_service}"
-LOG_DIR="${MOCK_LOG_DIR:-/home/luffy/projects/gitcode/JiuwenTest/logs}"
+MOCK_SERVICE_SRC="${MOCK_SERVICE_SRC:-/home/luffy/projects/gitcode/jiuwen-test/mock_service}"
+LOG_DIR="${MOCK_LOG_DIR:-/home/luffy/projects/gitcode/jiuwen-test/logs}"
 PID_FILE="${LOG_DIR}/mock_services.pid"
 PYTHON="${VENV_DIR}/bin/python"
 

@@ -27,7 +27,6 @@ log_warn()  { echo -e "${YELLOW}[WARN]${NC} $*"; }
 log_err()   { echo -e "${RED}[ERROR]${NC} $*"; }
 
 # ==================== 参数解析 ====================
-VENV_DIR="/home/luffy/projects/gitcode/.venv"
 RESTART=false
 
 while [[ $# -gt 0 ]]; do
@@ -56,8 +55,9 @@ done
 # ==================== 路径配置 ====================
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 SKILL_DIR="${SCRIPT_DIR}"  # yoskills/jiuwen/mock_service
-MOCK_SERVICE_SRC="/home/luffy/projects/gitcode/JiuwenTest/mock_service"
-LOG_DIR="/home/luffy/projects/gitcode/JiuwenTest/logs"
+VENV_DIR="${MOCK_VENV:-/home/luffy/projects/gitcode/.venv}"
+MOCK_SERVICE_SRC="${MOCK_SERVICE_SRC:-/home/luffy/projects/gitcode/jiuwen-test/mock_service}"
+LOG_DIR="${MOCK_LOG_DIR:-/home/luffy/projects/gitcode/jiuwen-test/logs}"
 PID_FILE="${LOG_DIR}/mock_services.pid"
 
 PYTHON="${VENV_DIR}/bin/python"
