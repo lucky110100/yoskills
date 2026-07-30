@@ -44,7 +44,26 @@ sk-your-api-key, none, null, empty, default, changeme
 
 ## 安装
 
-### 方式一：直接复制 hook 文件
+### 方式一：全局安装（推荐，所有仓库立即生效）
+
+通过 `core.hooksPath` 将 hook 安装到全局目录，所有 Git 仓库的 `git commit` 都会自动检查：
+
+```bash
+# 1. 创建全局 hooks 目录
+mkdir -p ~/.git-hooks
+
+# 2. 复制 pre-commit hook
+cp pre-commit ~/.git-hooks/pre-commit
+chmod +x ~/.git-hooks/pre-commit
+
+# 3. 设置全局 hooks 路径（Git 2.9+）
+git config --global core.hooksPath ~/.git-hooks
+```
+
+> ⚠️ 设置 `core.hooksPath` 后，所有仓库将使用全局 hooks 目录，不再读取各自的 `.git/hooks/`。
+> 如需恢复默认行为：`git config --global --unset core.hooksPath`
+
+### 方式二：单仓库安装 — 直接复制 hook 文件
 
 ```bash
 # 将 pre-commit hook 复制到目标仓库的 .git/hooks/ 目录
@@ -52,7 +71,7 @@ cp pre-commit /path/to/repo/.git/hooks/pre-commit
 chmod +x /path/to/repo/.git/hooks/pre-commit
 ```
 
-### 方式二：使用 install.sh 一键安装
+### 方式三：单仓库安装 — 使用 install.sh 一键安装
 
 ```bash
 cd /path/to/repo
@@ -198,7 +217,7 @@ ALLOWED_EXACT=(
 |------|------|
 | `SKILL.md` | 本文档 |
 | `pre-commit` | Git pre-commit hook 脚本 |
-| `install.sh` | 一键安装脚本 |
+| `install.sh` | 安装脚本（支持 `--global` 全局安装和 `--force` 强制覆盖） |
 
 ## 注意事项
 
