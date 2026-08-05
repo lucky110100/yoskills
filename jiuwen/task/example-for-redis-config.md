@@ -1,0 +1,14 @@
+创建目录D:\jiuwen\main\agent-core-java\examples\deep_agent,写个DeepAgent示例，要求如下：
+1、使用说明参考agent-core-java\examples\react_agent\README.md；
+2、示例包含Todo与Checkpointer共享Redis配置，参考ruoyi\doc\Todo与Checkpointer共享Redis-完整示例.md；
+3、示例功能演示通过真实调用DeepAgent，把Checkpoint和Todo内容写入Redis，可参考agent-core-java\src\test\java\com\openjiuwen\core\systemtest\TenantIsolationSystemTest.java；
+补充LLM和Redis信息如下，运行示例前，先配置到环境变量中，优先从环境变量获取：
+  "API_BASE":"http://localhost:4000/v1",
+  "API_KEY":"sk-aIjxTtLGmE7R7bcgXZqpjA",
+  "MODEL_PROVIDER":"OpenAI",
+  "MODEL_NAME":"local-GLM-5.2",
+  "LLM_SSL_VERIFY":"False",
+  "API_BASE_EMBEDDING":"http://localhost:4000/v1",
+  "MODEL_NAME_EMBEDDING":"local-GLM-5.2",
+  "REDIS_URL":"redis://127.0.0.1:6379",
+  "REDIS_CLUSTER_MODE":"false"

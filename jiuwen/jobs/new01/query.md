@@ -1,0 +1,2 @@
+分析项目jiuwenswarm与agent-core之间的关系，jiuwenswarm多出了什么能力。将结果输出到yoskills\jiuwen\jobs\new01。
+可以向我提出5个以上问题来确认我的意图。
