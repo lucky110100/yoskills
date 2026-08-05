@@ -97,15 +97,15 @@
 | 时间 | 动作 | 产出文件 |
 |------|------|----------|
 | 启动 | 设计文档结构并生成导航索引 | `README.md` |
-| 启动 | 生成项目概述 | `01-项目概述.md` |
-| 启动 | 生成整体架构（分层 + 10 大设计模式 + 数据流） | `02-整体架构.md` |
-| 启动 | 生成 core 模块文档（16 个子模块） | `03-core模块.md` |
-| 启动 | 生成 harness 模块文档（11 个子模块） | `04-harness模块.md` |
-| 启动 | 生成 agent_teams 模块文档 | `05-agent_teams模块.md` |
-| 启动 | 生成 agent_evolving 与 dev_tools 模块文档 | `06-agent_evolving与dev_tools模块.md` |
-| 启动 | 生成 extensions 与 rsi 模块文档 | `07-extensions与rsi模块.md` |
-| 启动 | 生成依赖关系文档（内部依赖图 + 外部依赖 + 入口点） | `08-依赖关系.md` |
-| 启动 | 生成运行方式文档（安装/配置/CLI/编程式/测试/质量） | `09-运行方式.md` |
+| 启动 | 生成项目概述 | `01-project-overview.md` |
+| 启动 | 生成整体架构（分层 + 10 大设计模式 + 数据流） | `02-overall-architecture.md` |
+| 启动 | 生成 core 模块文档（16 个子模块） | `03-core-module.md` |
+| 启动 | 生成 harness 模块文档（11 个子模块） | `04-harness-module.md` |
+| 启动 | 生成 agent_teams 模块文档 | `05-agent-teams-module.md` |
+| 启动 | 生成 agent_evolving 与 dev_tools 模块文档 | `06-agent-evolving-and-dev-tools-module.md` |
+| 启动 | 生成 extensions 与 rsi 模块文档 | `07-extensions-and-rsi-module.md` |
+| 启动 | 生成依赖关系文档（内部依赖图 + 外部依赖 + 入口点） | `08-dependencies.md` |
+| 启动 | 生成运行方式文档（安装/配置/CLI/编程式/测试/质量） | `09-running-guide.md` |
 
 ### 阶段五：基线记录与路标（当前阶段）
 
@@ -113,7 +113,7 @@
 |------|------|----------|
 | 启动 | 获取项目仓库 git log（最近 20 提交） | 确认基线 `bad6b4a4` |
 | 启动 | 获取分支状态与 tag 描述 | 确认 `develop` 领先 origin 4 提交，`v0.1.16.post1-95-gbad6b4a4` |
-| 启动 | 生成本路标文档 | `00-路标与增量更新说明.md` |
+| 启动 | 生成本路标文档 | `00-roadmap-and-incremental-update.md` |
 
 ---
 
@@ -126,16 +126,16 @@
 | 文件 | 内容 | 字数估算 |
 |------|------|----------|
 | `README.md` | 文档导航索引、项目速览、快速开始 | 短 |
-| `00-路标与增量更新说明.md` | 本文件：任务时间线、基线、增量更新流程 | 中 |
-| `01-项目概述.md` | 项目定位、核心能力、特性、技术栈、仓库结构 | 中 |
-| `02-整体架构.md` | 分层架构、10 大设计模式、运行时数据流、关键概念 | 长 |
-| `03-core模块.md` | core 层 16 个子模块的职责、关键类、设计模式 | 长 |
-| `04-harness模块.md` | harness 层 11 个子模块（DeepAgent/任务循环/Rails/工具/安全/CLI 等） | 长 |
-| `05-agent_teams模块.md` | 多智能体团队框架（TeamAgent/MCP/CLI/数据模型） | 长 |
-| `06-agent_evolving与dev_tools模块.md` | 自演进框架与调优工具，含 symphony 简介 | 中 |
-| `07-extensions与rsi模块.md` | A2A 集成与 RSI 评估优化框架 | 长 |
-| `08-依赖关系.md` | 内部依赖图、外部依赖表、可选依赖组、入口点 | 长 |
-| `09-运行方式.md` | 安装、配置、3 个 CLI 入口、编程式使用、测试、代码质量 | 长 |
+| `00-roadmap-and-incremental-update.md` | 本文件：任务时间线、基线、增量更新流程 | 中 |
+| `01-project-overview.md` | 项目定位、核心能力、特性、技术栈、仓库结构 | 中 |
+| `02-overall-architecture.md` | 分层架构、10 大设计模式、运行时数据流、关键概念 | 长 |
+| `03-core-module.md` | core 层 16 个子模块的职责、关键类、设计模式 | 长 |
+| `04-harness-module.md` | harness 层 11 个子模块（DeepAgent/任务循环/Rails/工具/安全/CLI 等） | 长 |
+| `05-agent-teams-module.md` | 多智能体团队框架（TeamAgent/MCP/CLI/数据模型） | 长 |
+| `06-agent-evolving-and-dev-tools-module.md` | 自演进框架与调优工具，含 symphony 简介 | 中 |
+| `07-extensions-and-rsi-module.md` | A2A 集成与 RSI 评估优化框架 | 长 |
+| `08-dependencies.md` | 内部依赖图、外部依赖表、可选依赖组、入口点 | 长 |
+| `09-running-guide.md` | 安装、配置、3 个 CLI 入口、编程式使用、测试、代码质量 | 长 |
 
 ### 3.2 文档特性
 
@@ -169,17 +169,17 @@
 
 | 提交前缀/关键词 | 影响路径 | 目标文档 |
 |-----------------|----------|----------|
-| `feat(core)` / `fix(core)` / 路径含 `openjiuwen/core/` | `openjiuwen/core/**` | `03-core模块.md` |
-| `feat(harness)` / `fix(harness)` / 路径含 `openjiuwen/harness/` | `openjiuwen/harness/**` | `04-harness模块.md` |
-| `feat(team)` / `fix(agent-team)`/`fix(agent_teams)` / 路径含 `openjiuwen/agent_teams/` | `openjiuwen/agent_teams/**` | `05-agent_teams模块.md` |
-| `feat(evolving)` / `fix(evolving)` / 路径含 `openjiuwen/agent_evolving/` 或 `dev_tools/` | `openjiuwen/agent_evolving/**`、`openjiuwen/dev_tools/**` | `06-agent_evolving与dev_tools模块.md` |
-| `feat(rsi)` / `fix(rsi)` / 路径含 `openjiuwen/rsi/` 或 `extensions/` | `openjiuwen/rsi/**`、`openjiuwen/extensions/**` | `07-extensions与rsi模块.md` |
-| `feat(symphony)` / 路径含 `openjiuwen/symphony/` | `openjiuwen/symphony/**` | `06-agent_evolving与dev_tools模块.md`（symphony 小节） |
-| 依赖变更（`pyproject.toml`） | `pyproject.toml` | `08-依赖关系.md` |
-| CLI/Makefile/测试配置变更 | `pyproject.toml`、`Makefile`、`tests/` | `09-运行方式.md` |
-| 架构规则变更 | `.claude/rules/`、`AGENTS.md` | `02-整体架构.md`、`01-项目概述.md` |
-| 新增/删除顶层模块 | `openjiuwen/` 顶层 | `01-项目概述.md`（仓库结构）、`02-整体架构.md`、可能新增模块文档 |
-| 版本号变更 | `pyproject.toml` `[project].version` | `01-项目概述.md`、本路标文档 |
+| `feat(core)` / `fix(core)` / 路径含 `openjiuwen/core/` | `openjiuwen/core/**` | `03-core-module.md` |
+| `feat(harness)` / `fix(harness)` / 路径含 `openjiuwen/harness/` | `openjiuwen/harness/**` | `04-harness-module.md` |
+| `feat(team)` / `fix(agent-team)`/`fix(agent_teams)` / 路径含 `openjiuwen/agent_teams/` | `openjiuwen/agent_teams/**` | `05-agent-teams-module.md` |
+| `feat(evolving)` / `fix(evolving)` / 路径含 `openjiuwen/agent_evolving/` 或 `dev_tools/` | `openjiuwen/agent_evolving/**`、`openjiuwen/dev_tools/**` | `06-agent-evolving-and-dev-tools-module.md` |
+| `feat(rsi)` / `fix(rsi)` / 路径含 `openjiuwen/rsi/` 或 `extensions/` | `openjiuwen/rsi/**`、`openjiuwen/extensions/**` | `07-extensions-and-rsi-module.md` |
+| `feat(symphony)` / 路径含 `openjiuwen/symphony/` | `openjiuwen/symphony/**` | `06-agent-evolving-and-dev-tools-module.md`（symphony 小节） |
+| 依赖变更（`pyproject.toml`） | `pyproject.toml` | `08-dependencies.md` |
+| CLI/Makefile/测试配置变更 | `pyproject.toml`、`Makefile`、`tests/` | `09-running-guide.md` |
+| 架构规则变更 | `.claude/rules/`、`AGENTS.md` | `02-overall-architecture.md`、`01-project-overview.md` |
+| 新增/删除顶层模块 | `openjiuwen/` 顶层 | `01-project-overview.md`（仓库结构）、`02-overall-architecture.md`、可能新增模块文档 |
+| 版本号变更 | `pyproject.toml` `[project].version` | `01-project-overview.md`、本路标文档 |
 
 ### 4.3 更新步骤（每次增量）
 
@@ -198,11 +198,11 @@
    - 行为变更 → 更新对应方法说明
    - 新增子模块 → 在模块总览表追加行，并补充子模块章节
 4. **更新依赖关系**（若 `pyproject.toml` 变更）：
-   - 核心依赖变更 → 更新 `08-依赖关系.md` §8.2.1
+   - 核心依赖变更 → 更新 `08-dependencies.md` §8.2.1
    - 可选依赖组变更 → 更新 §8.2.2
    - 入口点变更 → 更新 §8.3
 5. **更新运行方式**（若 CLI/Makefile/测试变更）：
-   - 新增命令 → 更新 `09-运行方式.md` §9.4
+   - 新增命令 → 更新 `09-running-guide.md` §9.4
    - 测试结构变更 → 更新 §9.6
 6. **更新本路标文档**：
    - 在"五、更新记录"表追加一行
@@ -219,9 +219,9 @@
 - [ ] 本路标文档"更新记录"表已追加新行
 - [ ] 本路标文档"基线提交"已更新为新 HEAD
 - [ ] 涉及的模块文档已更新关键类/函数表
-- [ ] `08-依赖关系.md` 与最新 `pyproject.toml` 一致
-- [ ] `09-运行方式.md` 与最新 CLI/Makefile 一致
-- [ ] `01-项目概述.md` 仓库结构与最新目录一致
+- [ ] `08-dependencies.md` 与最新 `pyproject.toml` 一致
+- [ ] `09-running-guide.md` 与最新 CLI/Makefile 一致
+- [ ] `01-project-overview.md` 仓库结构与最新目录一致
 - [ ] README.md 导航链接全部有效
 - [ ] 新增的 `file:///` 路径指向真实文件
 
@@ -268,12 +268,12 @@ git -C "D:\jiuwen\main\agent-core" log --oneline -- openjiuwen/core/ | head -20
 
 | 文档 | 对应源码路径 | 关键关注点 |
 |------|--------------|------------|
-| `01-项目概述.md` | `README.md`、`pyproject.toml`、`AGENTS.md`、`openjiuwen/` 顶层 | 项目定位、版本、顶层结构 |
-| `02-整体架构.md` | `.claude/rules/architecture.md`、全模块 | 分层、设计模式、数据流 |
-| `03-core模块.md` | `openjiuwen/core/**` | graph/workflow/runner/session/single_agent/context_engine/sys_operation/security |
-| `04-harness模块.md` | `openjiuwen/harness/**` | deep_agent/task_loop/rails/tools/security/prompts/workspace/goal/lsp/cli |
-| `05-agent_teams模块.md` | `openjiuwen/agent_teams/**` | agent/cli/mcp/models/runtime/schema/tools/messager |
-| `06-agent_evolving与dev_tools模块.md` | `openjiuwen/agent_evolving/**`、`openjiuwen/dev_tools/**`、`openjiuwen/symphony/**` | 自演进、调优、能力编排 |
-| `07-extensions与rsi模块.md` | `openjiuwen/extensions/**`、`openjiuwen/rsi/**`、`openjiuwen/auto_harness/**` | A2A、RSI 评估、auto_harness |
-| `08-依赖关系.md` | `pyproject.toml` | 内部依赖图、外部依赖、可选依赖、入口点 |
-| `09-运行方式.md` | `pyproject.toml`、`Makefile`、`tests/`、`deploy/` | 安装、CLI、编程式、测试、质量 |
+| `01-project-overview.md` | `README.md`、`pyproject.toml`、`AGENTS.md`、`openjiuwen/` 顶层 | 项目定位、版本、顶层结构 |
+| `02-overall-architecture.md` | `.claude/rules/architecture.md`、全模块 | 分层、设计模式、数据流 |
+| `03-core-module.md` | `openjiuwen/core/**` | graph/workflow/runner/session/single_agent/context_engine/sys_operation/security |
+| `04-harness-module.md` | `openjiuwen/harness/**` | deep_agent/task_loop/rails/tools/security/prompts/workspace/goal/lsp/cli |
+| `05-agent-teams-module.md` | `openjiuwen/agent_teams/**` | agent/cli/mcp/models/runtime/schema/tools/messager |
+| `06-agent-evolving-and-dev-tools-module.md` | `openjiuwen/agent_evolving/**`、`openjiuwen/dev_tools/**`、`openjiuwen/symphony/**` | 自演进、调优、能力编排 |
+| `07-extensions-and-rsi-module.md` | `openjiuwen/extensions/**`、`openjiuwen/rsi/**`、`openjiuwen/auto_harness/**` | A2A、RSI 评估、auto_harness |
+| `08-dependencies.md` | `pyproject.toml` | 内部依赖图、外部依赖、可选依赖、入口点 |
+| `09-running-guide.md` | `pyproject.toml`、`Makefile`、`tests/`、`deploy/` | 安装、CLI、编程式、测试、质量 |

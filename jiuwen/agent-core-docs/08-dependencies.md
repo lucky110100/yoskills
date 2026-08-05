@@ -108,7 +108,7 @@ harness.deep_agent
    └── 外部: anyio, asyncio, stdlib
 ```
 
-harness 内部依赖图详见 [04-harness模块.md §4.12](04-harness模块.md)。
+harness 内部依赖图详见 [04-harness-module.md §4.12](04-harness-module.md)。
 
 ### 8.1.3 agent_teams 层依赖关系
 
