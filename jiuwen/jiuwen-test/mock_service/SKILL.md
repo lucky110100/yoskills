@@ -7,9 +7,7 @@ execution:
   timeout: 120
   entrypoint: ops.sh
   environment:
-    MOCK_VENV: "/home/luffy/projects/gitcode/.venv"
-    MOCK_SERVICE_SRC: "/home/luffy/projects/gitcode/jiuwen-test/mock_service"
-    MOCK_LOG_DIR: "/home/luffy/projects/gitcode/jiuwen-test/logs"
+    MOCK_PROJECT_ROOT: "/home/luffy/projects/jiuwen/main"
 ---
 
 # Mock Service 运维操作
@@ -28,7 +26,7 @@ mock_service 包含5个服务，用于 agent-core 和 agent-core-java 的集成�
 | mcp_sse_server2 | 8189 | FastMCP SSE | MCP SSE 工具服务（乘法+消息） |
 | mcp_sse_server3 | 8190 | FastMCP SSE | MCP SSE 工具服务（空工具） |
 
-**源码位置**：`/home/luffy/projects/gitcode/jiuwen-test/mock_service/`
+**源码位置**：`${MOCK_PROJECT_ROOT}/jiuwen-test/mock_service/`
 
 ## 支持的命令
 
@@ -122,13 +120,20 @@ fastmcp>=2.13.3,<2.14.0   # ⚠️ 版本锁定！
 mcp>=1.0
 ```
 
-## 环境变量
+## 配置文件
 
-| 变量 | 默认值 | 说明 |
+所有路径配置统一在 [config.sh](file:///home/luffy/projects/jiuwen/main/yoskills/jiuwen/jiuwen-test/mock_service/config.sh) 中管理，各脚本通过 `source` 引入。
+
+**配置优先级**：环境变量 > 默认值（基于 `MOCK_PROJECT_ROOT` 派生）
+
+只需设置 `MOCK_PROJECT_ROOT`，其余路径自动派生：
+
+| 变量 | 默认值（派生） | 说明 |
 |------|--------|------|
-| `MOCK_VENV` | `/home/luffy/projects/gitcode/.venv` | Python venv 路径 |
-| `MOCK_SERVICE_SRC` | `/home/luffy/projects/gitcode/jiuwen-test/mock_service` | mock_service 源码路径 |
-| `MOCK_LOG_DIR` | `/home/luffy/projects/gitcode/jiuwen-test/logs` | 日志输出目录 |
+| `MOCK_PROJECT_ROOT` | `/home/luffy/projects/jiuwen/main` | 项目根目录（唯一基准路径） |
+| `MOCK_VENV` | `${MOCK_PROJECT_ROOT}/.venv` | Python venv 路径（设此变量则独立覆盖） |
+| `MOCK_SERVICE_SRC` | `${MOCK_PROJECT_ROOT}/jiuwen-test/mock_service` | mock_service 源码路径（设此变量则独立覆盖） |
+| `MOCK_LOG_DIR` | `${MOCK_PROJECT_ROOT}/jiuwen-test/logs` | 日志输出目录（设此变量则独立覆盖） |
 
 ## 服务架构
 

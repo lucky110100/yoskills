@@ -10,17 +10,8 @@
 
 set -euo pipefail
 
-# ==================== 颜色输出 ====================
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-CYAN='\033[0;36m'
-NC='\033[0m'
-
-log_info()  { echo -e "${CYAN}[INFO]${NC} $*"; }
-log_ok()    { echo -e "${GREEN}[OK]${NC} $*"; }
-log_warn()  { echo -e "${YELLOW}[WARN]${NC} $*"; }
-log_err()   { echo -e "${RED}[ERROR]${NC} $*"; }
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "${SCRIPT_DIR}/config.sh"
 
 # ==================== 参数解析 ====================
 FORCE=false
@@ -43,24 +34,6 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# ==================== 路径配置 ====================
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-VENV_DIR="${MOCK_VENV:-/home/luffy/projects/gitcode/.venv}"
-MOCK_SERVICE_SRC="${MOCK_SERVICE_SRC:-/home/luffy/projects/gitcode/jiuwen-test/mock_service}"
-LOG_DIR="${MOCK_LOG_DIR:-/home/luffy/projects/gitcode/jiuwen-test/logs}"
-PID_FILE="${LOG_DIR}/mock_services.pid"
-
-# 端口列表和名称映射
-PORTS=(8000 8088 8188 8189 8190)
-declare -A PORT_NAMES
-PORT_NAMES=(
-    [8000]="weather_reporter"
-    [8088]="mockllm"
-    [8188]="mcp_sse_server"
-    [8189]="mcp_sse_server2"
-    [8190]="mcp_sse_server3"
-)
-
 echo "=========================================="
 echo "  停止 Mock 服务"
 echo "=========================================="
@@ -79,7 +52,6 @@ if [[ "${FORCE}" == false ]] && [[ -f "${PID_FILE}" ]]; then
             kill ${pid}
             sleep 1
 
-            # 检查是否还在运行，如果还在则强制杀
             if kill -0 ${pid} 2>/dev/null; then
                 log_warn "进程未响应，强制终止 ..."
                 kill -9 ${pid} 2>/dev/null || true
@@ -90,7 +62,6 @@ if [[ "${FORCE}" == false ]] && [[ -f "${PID_FILE}" ]]; then
         fi
     done < "${PID_FILE}"
 
-    # 清空PID文件
     > "${PID_FILE}"
 else
     if [[ "${FORCE}" == true ]]; then
