@@ -2,7 +2,7 @@
 # Mock Service 依赖安装脚本
 # 使用方式: ./install.sh [--venv <path>] [--check]
 #
-# --venv  指定 venv 路径（默认: /home/luffy/projects/gitcode/.venv）
+# --venv  指定 venv 路径（覆盖 config.sh 默认值）
 # --check 只检查依赖是否已安装，不执行安装
 #
 # 经验总结：
@@ -20,26 +20,17 @@
 
 set -euo pipefail
 
-# ==================== 颜色输出 ====================
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-CYAN='\033[0;36m'
-NC='\033[0m'
-
-log_info()  { echo -e "${CYAN}[INFO]${NC} $*"; }
-log_ok()    { echo -e "${GREEN}[OK]${NC} $*"; }
-log_warn()  { echo -e "${YELLOW}[WARN]${NC} $*"; }
-log_err()   { echo -e "${RED}[ERROR]${NC} $*"; }
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "${SCRIPT_DIR}/config.sh"
 
 # ==================== 参数解析 ====================
-VENV_DIR="${MOCK_VENV:-/home/luffy/projects/gitcode/.venv}"
 CHECK_ONLY=false
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --venv)
             VENV_DIR="$2"
+            PYTHON="${VENV_DIR}/bin/python"
             shift 2
             ;;
         --check)
@@ -59,8 +50,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-PYTHON="${VENV_DIR}/bin/python"
-PIP="${VENV_DIR}/bin/pip"
+PIP_CMD=("${PYTHON}" -m pip)
 
 # ==================== 检查 venv ====================
 if [[ ! -f "${PYTHON}" ]]; then
@@ -73,9 +63,6 @@ log_info "Using Python: ${PYTHON}"
 log_info "Python version: $(${PYTHON} --version)"
 
 # ==================== 依赖定义 ====================
-# 分层定义：核心依赖 → mockllm 依赖 → MCP 依赖
-# 每个依赖指定：包名、最低版本、说明
-
 # 核心依赖（weather_reporter + mockllm 共用）
 CORE_DEPS=(
     "fastapi>=0.68.0|FastAPI Web框架"
@@ -116,8 +103,7 @@ check_deps() {
         local desc="${dep_spec##*|}"
         local pkg_name="${pkg_version%%[>=<]*}"
 
-        # 检查是否已安装
-        local installed=$(${PIP} show "${pkg_name}" 2>/dev/null | grep "^Version:" | awk '{print $2}' || echo "")
+        local installed=$("${PIP_CMD[@]}" show "${pkg_name}" 2>/dev/null | grep "^Version:" | awk '{print $2}' || echo "")
 
         if [[ -n "${installed}" ]]; then
             log_ok "${pkg_name} ${installed} ✅ (${desc})"
@@ -144,7 +130,6 @@ install_deps() {
     echo "  安装 ${category} 依赖"
     echo "=========================================="
 
-    # 构造 pip install 参数列表
     local install_args=()
     for dep_spec in "${deps[@]}"; do
         local pkg_version="${dep_spec%%|*}"
@@ -152,14 +137,14 @@ install_deps() {
     done
 
     log_info "安装: ${install_args[*]}"
-    ${PIP} install "${install_args[@]}"
+    "${PIP_CMD[@]}" install "${install_args[@]}"
 
     log_ok "${category} 依赖安装完成"
 }
 
 # ==================== fastmcp 兼容性检查 ====================
 check_fastmcp_compat() {
-    local fastmcp_ver=$(${PIP} show fastmcp 2>/dev/null | grep "^Version:" | awk '{print $2}' || echo "")
+    local fastmcp_ver=$("${PIP_CMD[@]}" show fastmcp 2>/dev/null | grep "^Version:" | awk '{print $2}' || echo "")
 
     if [[ -z "${fastmcp_ver}" ]]; then
         return 1
@@ -170,22 +155,19 @@ check_fastmcp_compat() {
     echo "  fastmcp 兼容性检查 (当前: ${fastmcp_ver})"
     echo "=========================================="
 
-    # 检查关键兼容性问题
     local major="${fastmcp_ver%%.*}"
 
     if [[ "${major}" -ge 3 ]]; then
         log_err "fastmcp ${fastmcp_ver} 是 3.x 版本，FastMCP() 不再接受 host/port 参数！"
-        log_info "需要降级到 2.13.3: ${PIP} install 'fastmcp>=2.13.3,<2.14.0'"
+        log_info "需要降级到 2.13.3: ${PYTHON} -m pip install 'fastmcp>=2.13.3,<2.14.0'"
         return 1
     fi
 
-    # 检查 2.14.x 的已知 bug
     if [[ "${fastmcp_ver}" =~ ^2\.14\. ]]; then
         log_warn "fastmcp ${fastmcp_ver} 是 2.14.x 版本，可能有 auth.py bug"
-        log_info "建议使用 2.13.3: ${PIP} install 'fastmcp>=2.13.3,<2.14.0'"
+        log_info "建议使用 2.13.3: ${PYTHON} -m pip install 'fastmcp>=2.13.3,<2.14.0'"
     fi
 
-    # 检查构造函数 host/port 参数
     local has_host_port=$(${PYTHON} -c "
 from fastmcp import FastMCP
 import inspect
@@ -204,7 +186,6 @@ print('host' in params and 'port' in params)
         log_err "无法检查 FastMCP 构造函数参数"
     fi
 
-    # 检查 mcp_config 模块
     local has_mcp_config=$(${PYTHON} -c "
 try:
     from fastmcp.mcp_config import MCPConfig

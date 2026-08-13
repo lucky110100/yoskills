@@ -6,17 +6,8 @@
 
 set -euo pipefail
 
-# ==================== 颜色输出 ====================
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[0;33m'
-CYAN='\033[0;36m'
-NC='\033[0m'
-
-log_info()  { echo -e "${CYAN}[INFO]${NC} $*"; }
-log_ok()    { echo -e "${GREEN}[OK]${NC} $*"; }
-log_warn()  { echo -e "${YELLOW}[WARN]${NC} $*"; }
-log_err()   { echo -e "${RED}[ERROR]${NC} $*"; }
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "${SCRIPT_DIR}/config.sh"
 
 # ==================== 参数解析 ====================
 DETAIL=false
@@ -38,31 +29,6 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
-
-# ==================== 路径配置 ====================
-SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-VENV_DIR="${MOCK_VENV:-/home/luffy/projects/gitcode/.venv}"
-MOCK_SERVICE_SRC="${MOCK_SERVICE_SRC:-/home/luffy/projects/gitcode/jiuwen-test/mock_service}"
-LOG_DIR="${MOCK_LOG_DIR:-/home/luffy/projects/gitcode/jiuwen-test/logs}"
-PID_FILE="${LOG_DIR}/mock_services.pid"
-
-PORTS=(8000 8088 8188 8189 8190)
-declare -A PORT_NAMES
-PORT_NAMES=(
-    [8000]="weather_reporter"
-    [8088]="mockllm"
-    [8188]="mcp_sse_server"
-    [8189]="mcp_sse_server2"
-    [8190]="mcp_sse_server3"
-)
-declare -A LOG_PATHS
-LOG_PATHS=(
-    [8000]="${LOG_DIR}/mock_http/weather_reporter.log"
-    [8088]="${LOG_DIR}/mockllm/mockllm.log"
-    [8188]="${LOG_DIR}/mcp/mcp_sse_server.log"
-    [8189]="${LOG_DIR}/mcp/mcp_sse_server2.log"
-    [8190]="${LOG_DIR}/mcp/mcp_sse_server3.log"
-)
 
 echo "=========================================="
 echo "  Mock Service 状态"
@@ -109,7 +75,7 @@ if [[ "${DETAIL}" == true ]]; then
     log_info "各服务最近日志:"
     for port in "${PORTS[@]}"; do
         name="${PORT_NAMES[$port]}"
-        log_path="${LOG_PATHS[$port]}"
+        log_path="${SERVICE_LOGS[$name]}"
         echo ""
         echo "--- ${name} (${log_path}) ---"
         if [[ -f "${log_path}" ]]; then
@@ -126,5 +92,5 @@ if [[ "${all_running}" == true ]]; then
     log_ok "所有5个服务运行正常 ✅"
 else
     log_err "部分服务未运行，请检查日志或重启 ❌"
-    log_info "重启: bash $(cd "$(dirname "$0")" && pwd)/start.sh --restart"
+    log_info "重启: bash ${SCRIPT_DIR}/start.sh --restart"
 fi
