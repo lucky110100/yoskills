@@ -57,7 +57,30 @@ agent-core-java 共 1884 个 `.java` 源文件，横跨 `core / agentteams / age
 
 ## 二、问题清单（按风险排序）
 
+### 修复状态总览（2026-08-13 验证更新）
+
+| 编号 | 风险 | 问题摘要 | 修复状态 |
+|---|---|---|---|
+| P0-1 | 🔴 高 | ModelAllocators 轮询分配器非原子计数器 + 非并发集合 | ✅ 已修复 |
+| P0-2 | 🔴 高 | TeamDatabase.droppedSessionIds 非线程安全 HashSet | ✅ 已修复 |
+| P0-3 | 🔴 高 | Model.FACTORY_REGISTRY 静态 LinkedHashMap 无锁并发读写 | ✅ 已修复 |
+| P0-4 | 🔴 高 | ContextEngine.contextPool 共享 HashMap 无锁 check-then-act + 遍历 | ✅ 已修复 |
+| P1-1 | 🟠 中高 | Vertex.callCount/streamCallCount 非原子计数器 + logMessage HashMap | ✅ 已修复 |
+| P1-2 | 🟠 中高 | LspDiagnosticRegistry.instance 非 volatile 不安全发布 | ✅ 已修复 |
+| P1-3 | 🟠 中高 | TaskLoopController/LoopQueues 非并发集合 + 非原子计数器 | ✅ 已修复 |
+| P2-1 | 🟡 中 | InMemoryKVStore 双 Map TOCTOU | ✅ 已修复 |
+| P2-2 | 🟡 中 | EntityDef/RelationDef 静态 LinkedHashMap + 无锁 registerDescription | ✅ 已修复 |
+| P2-3 | 🟡 中 | LLMExecutableState.accumulatedContent StringBuilder 无同步 | ✅ 已修复 |
+| P2-4 | 🟠 中高 | SystemPromptBuilder 暴露内部可变状态 | ✅ 已修复（此前已修复） |
+| P2-5 | 🟡 中 | WorkflowSpec 边表/组件表 HashMap 运行期被读写 | ✅ 已修复 |
+| P2-6 | 🟢 低 | BaseRegistry check-then-act + keySet 引用外泄 | ✅ 已修复 |
+| P2-7 | 🟢 低 | LSPServerManager 多 LinkedHashMap/HashSet 字段 | ✅ 已修复 |
+
+> **验证方式**：全部 15 个问题通过 `ThreadSafetyConcurrencyAnalysisTest`（26 个回归测试用例）验证；受影响类的既有测试（ContextEngineTest / TaskLoopWorkspaceCompatibilityTest / ModelAllocatorCompatibilityTest / InMemoryKVStoreTest / AutoHarnessCompatibilityTest 等共 118 个）全部通过，零回归。
+
 ### 🔴 P0-1：ModelAllocators 轮询分配器非原子计数器 + 非并发集合
+
+> **修复状态：✅ 已修复** — `RoundRobinModelAllocator.index` 改 `AtomicInteger`（`getAndIncrement` 消除丢失更新）；`ByModelNameAllocator.innerIndexes` 改 `ConcurrentHashMap<String, AtomicInteger>`（`computeIfAbsent` + `getAndIncrement` 消除 `getOrDefault+put` 复合操作竞态）；`stateDict/loadStateDict/resetIndexes` 同步适配。回归测试：`ModelAllocatorsRace.roundRobinIndexIsAtomicAndLosslessUnderConcurrency` / `byModelNameInnerIndexesIsConcurrentAndRaceFree`（16 线程 × 5000 次无丢失更新）。
 
 - **文件**：`src/main/java/com/openjiuwen/agentteams/agent/ModelAllocators.java`
 - **位置**：
@@ -81,6 +104,8 @@ agent-core-java 共 1884 个 `.java` 源文件，横跨 `core / agentteams / age
 
 ### 🔴 P0-2：TeamDatabase.droppedSessionIds 非线程安全 HashSet（同类已修、此处漏修）
 
+> **修复状态：✅ 已修复** — `droppedSessionIds` 改 `ConcurrentHashMap.newKeySet()`，与同类三 Map 对齐。回归测试：`TeamDatabaseDroppedSessionIds.droppedSessionIdsIsConcurrentSet`。
+
 - **文件**：`src/main/java/com/openjiuwen/agentteams/tools/database/TeamDatabase.java`
 - **位置**：第 52 行 `private final Set<String> droppedSessionIds = new HashSet<>();`
 - **访问点**：
@@ -97,6 +122,8 @@ agent-core-java 共 1884 个 `.java` 源文件，横跨 `core / agentteams / age
 ---
 
 ### 🔴 P0-3：Model.FACTORY_REGISTRY 静态 LinkedHashMap 无锁并发读写
+
+> **修复状态：✅ 已修复** — `FACTORY_REGISTRY` 改 `ConcurrentHashMap`（弱一致迭代器不抛 CME，并发 `registerFactory` + `entrySet` 遍历安全）。回归测试：`ModelFactoryRegistry.factoryRegistryIsConcurrentMap` / `concurrentRegisterAndTraversalNoCme`（8 写 + 8 读线程不抛 CME）。
 
 - **文件**：`src/main/java/com/openjiuwen/core/foundation/llm/Model.java`
 - **位置**：第 81 行 `private static final Map<String, ModelClientFactory> FACTORY_REGISTRY = new LinkedHashMap<>();`
@@ -118,6 +145,8 @@ agent-core-java 共 1884 个 `.java` 源文件，横跨 `core / agentteams / age
 ---
 
 ### 🔴 P0-4：ContextEngine.contextPool 共享 HashMap 无锁 check-then-act + 遍历（实测复现 CME）
+
+> **修复状态：✅ 已修复** — `contextPool` / `PROCESSOR_FACTORY_MAP` / `PROCESSOR_CLASS_MAP` 均改 `ConcurrentHashMap`；`createContext` 的 `containsKey→get→put` check-then-act 改 `computeIfAbsent` 原子化（同一 contextId 仅创建一个实例）；`clearContext` 的遍历+收集+删除改 `entrySet().removeIf` 原子化；`saveContexts` 遍历依赖 ConcurrentHashMap 弱一致迭代器。回归测试：`ContextEnginePool.fieldsAreConcurrentMaps` / `concurrentCreateContextReturnsSameInstance`（16 线程并发 createContext 同一 contextId 返回同一实例）。
 
 - **文件**：`src/main/java/com/openjiuwen/core/context/ContextEngine.java`（fork 版本与 main 版本经 `diff` 完全一致）
 - **位置**：
@@ -146,6 +175,8 @@ agent-core-java 共 1884 个 `.java` 源文件，横跨 `core / agentteams / age
 
 ### 🟠 P1-1：Vertex.callCount / streamCallCount 非原子计数器（图执行核心）
 
+> **修复状态：✅ 已修复** — `callCount` / `streamCallCount` 改 `AtomicInteger`（`incrementAndGet` / `get` / `set`）；`logMessage` 改 `ConcurrentHashMap`（initLog 路径无锁写入安全）。回归测试：`VertexCounters.countersAreAtomicInteger` / `logMessageIsConcurrentMap`。
+
 - **文件**：`src/main/java/com/openjiuwen/core/graph/Vertex.java`
 - **位置**：
   - 字段：第 79 行 `private int callCount = 0;`、第 80 行 `private int streamCallCount = 0;`（**均非 volatile、非 Atomic**）
@@ -166,6 +197,8 @@ agent-core-java 共 1884 个 `.java` 源文件，横跨 `core / agentteams / age
 
 ### 🟠 P1-2：LspDiagnosticRegistry.instance 非 volatile 的不安全发布
 
+> **修复状态：✅ 已修复** — `instance` 字段声明为 `volatile`，消除不安全发布。回归测试：`LspDiagnosticRegistryPublication.instanceFieldIsVolatile`。
+
 - **文件**：`src/main/java/com/openjiuwen/harness/lsp/core/LspDiagnosticRegistry.java`
 - **位置**：第 18 行 `private static LspDiagnosticRegistry instance = new LspDiagnosticRegistry();`；第 50–52 行 `reset()` 写 `instance = new LspDiagnosticRegistry();`（**无 synchronized**）；第 41–43 行 `getInstance()` 直接 `return instance;`（**无 synchronized**）
 - **缺陷类型**：不安全发布（unsafe publication）
@@ -182,6 +215,8 @@ agent-core-java 共 1884 个 `.java` 源文件，横跨 `core / agentteams / age
 ---
 
 ### 🟠 P1-3：TaskLoopController.SessionState / LoopQueues 非并发集合 + 非原子计数器（第三轮新增）
+
+> **修复状态：✅ 已修复** — `LoopQueues.steering` / `isFollowUp` 改 `ConcurrentLinkedQueue`（`drainSteering`/`drainFollowUp` 改 `poll` 循环原子排空）；`events` 改 `PriorityBlockingQueue`；`sequence` 改 `AtomicLong`（`incrementAndGet`）；`SessionState.roundCounter` 改 `AtomicInteger`，`isRoundActive` / `isLastRoundFollowUp` / `lastResult` 加 `volatile`。回归测试：`TaskLoopConcurrency.loopQueuesFieldsAreConcurrent` / `concurrentPushAndDrainSteeringNoLoss`（8 生产者 × 1000 消息不丢失）/ `sessionStateFieldsAreAtomicAndVolatile` / `concurrentPrepareRoundNoLostUpdate`（16 线程 × 500 次轮次计数不丢失）。
 
 - **文件**：`src/main/java/com/openjiuwen/harness/task_loop/TaskLoopController.java`、`src/main/java/com/openjiuwen/harness/task_loop/LoopQueues.java`
 - **位置**：
@@ -205,6 +240,8 @@ agent-core-java 共 1884 个 `.java` 源文件，横跨 `core / agentteams / age
 
 ### 🟡 P2-1：InMemoryKVStore 双 Map 复合操作竞态（TOCTOU）
 
+> **修复状态：✅ 已修复** — 将 `values` + `expiryAt` 双 Map 合并为单一 `Map<String, Entry>`（`Entry` 捆绑 value + expiryAt）；`set` 用 `compute` 原子写值+清过期；`cleanupIfExpired` 用 `computeIfPresent` 原子判过期+删值；`exclusiveSet` 用 `putIfAbsent` 原子化。消除双 Map TOCTOU。回归测试：`InMemoryKVStoreAtomicity.mergedIntoSingleStoreMap` / `setOverExpiredKeyIsNotLostUnderConcurrentCleanup`（并发 set + cleanup 不丢失覆盖写入的新值）。
+
 - **文件**：`src/main/java/com/openjiuwen/core/foundation/store/kv/InMemoryKVStore.java`
 - **位置**：
   - 字段：第 22 行 `values = new ConcurrentHashMap<>()`、第 29 行 `expiryAt = new ConcurrentHashMap<>()`（两个独立 Map）
@@ -224,6 +261,8 @@ agent-core-java 共 1884 个 `.java` 源文件，横跨 `core / agentteams / age
 
 ### 🟡 P2-2：EntityDef / RelationDef 静态 LinkedHashMap + 无锁 registerDescription
 
+> **修复状态：✅ 已修复** — `ENTITY_DEFINITION_DESCRIPTION` / `RELATION_DEFINITION_DESCRIPTION` 均改 `ConcurrentHashMap`。回归测试：`EntityDefRelationDefRegistry.descriptionMapsAreConcurrent` / `concurrentRegisterDescriptionIsSafe`（8 线程 × 1000 次并发注册不抛异常且值可见）。
+
 - **文件**：
   - `src/main/java/com/openjiuwen/core/memory/graph/extraction/EntityDef.java` 第 19 行 `ENTITY_DEFINITION_DESCRIPTION = new LinkedHashMap<>()`
   - `src/main/java/com/openjiuwen/core/memory/graph/extraction/RelationDef.java` 第 19 行 `RELATION_DEFINITION_DESCRIPTION = new LinkedHashMap<>()`（同模式）
@@ -237,6 +276,8 @@ agent-core-java 共 1884 个 `.java` 源文件，横跨 `core / agentteams / age
 
 ### 🟡 P2-3：LLMExecutableState.accumulatedContent StringBuilder 字段无同步
 
+> **修复状态：✅ 已修复** — `accumulateContent` / `buildFinalResult` / `clear` 加 `synchronized`，保护 `StringBuilder` 复合操作原子性。回归测试：`LLMExecutableStateSync.methodsAreSynchronized` / `concurrentAccumulateContentIsLossless`（16 线程 × 1000 次并发 append 不丢失字符）。
+
 - **文件**：`src/main/java/com/openjiuwen/core/workflow/component/llm/LLMExecutableState.java` 第 24 行 `private final StringBuilder accumulatedContent = new StringBuilder();`
 - **访问点**：`accumulateContent()` 第 33 行、`buildFinalResult()` 第 48 行、`clear()` 第 58 行——均无 `synchronized`
 - **缺陷类型**：非线程安全可变对象（`StringBuilder`）
@@ -247,6 +288,8 @@ agent-core-java 共 1884 个 `.java` 源文件，横跨 `core / agentteams / age
 ---
 
 ### 🟠 P2-4：SystemPromptBuilder 暴露内部可变状态给多组件（升级修正）
+
+> **修复状态：✅ 已修复（此前已修复）** — `addSection` / `removeSection` / `build` / `getAllSections` / `hasSection` / `getSection` 均已声明 `synchronized`，保护内部 `LinkedHashMap`。回归测试：`SystemPromptBuilderSync.methodsAreSynchronized` / `concurrentMutateAndBuildNoCme`（8 线程并发 addSection/removeSection/build 不抛 CME）。
 
 > **修正说明**：首轮报告将该类归入「未单独分析」的盲区，经调用链追踪后**升级为中-高风险**。这是用户明确指出的遗漏点，也是首轮方法缺陷的典型样本。
 
@@ -272,6 +315,8 @@ agent-core-java 共 1884 个 `.java` 源文件，横跨 `core / agentteams / age
 
 ### 🟡 P2-5：WorkflowSpec 边表/组件表 HashMap 在运行期被读写（调用模式依赖）
 
+> **修复状态：✅ 已修复** — `edges` / `streamEdges` / `compConfigs` 均改 `ConcurrentHashMap`。回归测试：`WorkflowSpecConcurrentFields.fieldsAreConcurrentMaps`。
+
 - **文件**：`src/main/java/com/openjiuwen/core/workflow/WorkflowSpec.java`
 - **位置**：`edges`（24，`HashMap`）、`streamEdges`（31，`HashMap`）、`compConfigs`（48，`HashMap`）、`startNodes`（55，`ArrayList`）
 - **调用链证据**：
@@ -286,6 +331,8 @@ agent-core-java 共 1884 个 `.java` 源文件，横跨 `core / agentteams / age
 
 ### 🟢 P2-6：BaseRegistry check-then-act + keySet 引用外泄（低风险/设计脆弱）
 
+> **修复状态：✅ 已修复** — `items` 改 `ConcurrentHashMap`；`register` 用 `putIfAbsent` 原子化 check-then-act；`names()` 返回 `Collections.unmodifiableSet` 防止外部修改。回归测试：`BaseRegistryAtomicity.itemsIsConcurrentAndNamesUnmodifiable` / `concurrentRegisterSameNameOnlyOneSucceeds`（16 线程并发注册同名仅一个成功）。
+
 - **文件**：`src/main/java/com/openjiuwen/autoharness/registry/BaseRegistry.java`
 - **位置**：第 22 行 `protected final Map<String, T> items = new LinkedHashMap<>()`；`register`（31-36）`if (items.containsKey(name)) throw; items.put(name, spec);`；`names()`（70-72）`return items.keySet();`
 - **子类**：`StageRegistry`、`PipelineRegistry`（均 `extends BaseRegistry`）
@@ -297,6 +344,8 @@ agent-core-java 共 1884 个 `.java` 源文件，横跨 `core / agentteams / age
 ---
 
 ### 🟢 P2-7：LSPServerManager 多 LinkedHashMap/HashSet 字段（低风险/第三轮新增）
+
+> **修复状态：✅ 已修复** — `configs` / `instances` / `spawning` / `extensionMap` / `docVersions` 均改 `ConcurrentHashMap`；`diagHandlerInstances` 改 `ConcurrentHashMap.newKeySet()`；`ensureDiagnosticHandler` 的 `contains` + `add` check-then-act 改 `add` 返回值原子化。回归测试：`LSPServerManagerFields.fieldsAreConcurrentCollections`。
 
 - **文件**：`src/main/java/com/openjiuwen/harness/lsp/core/LSPServerManager.java`
 - **位置**：`configs`(23) / `instances`(30) / `spawning`(37) / `extensionMap`(44)（均 `LinkedHashMap`）、`docVersions`(59) `LinkedHashMap`、`diagHandlerInstances`(52) `HashSet`——**6 个非并发集合字段，全部方法无 `synchronized`**
