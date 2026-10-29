@@ -48,12 +48,51 @@ function Invoke-GitCodeApi {
     }
 }
 
+function Invoke-GitCodeApiPost {
+    param([Parameter(Mandatory)][string]$Url, [Parameter(Mandatory)][string]$Token, [Parameter(Mandatory)][string]$Body)
+    $wc = New-Object System.Net.WebClient
+    $wc.Encoding = [System.Text.Encoding]::UTF8
+    $wc.Headers.Add("Accept", "application/json")
+    $wc.Headers.Add("Authorization", "Bearer $Token")
+    $wc.Headers.Add("Content-Type", "application/json; charset=utf-8")
+    try {
+        return $wc.UploadString($Url, "POST", $Body)
+    } catch [System.Net.WebException] {
+        $resp = $_.Exception.Response
+        if ($resp) {
+            $sr = New-Object System.IO.StreamReader($resp.GetResponseStream(), [System.Text.Encoding]::UTF8)
+            $errBody = $sr.ReadToEnd()
+            $code = [int]$resp.StatusCode
+            Write-Error "HTTP $code : $errBody"
+        } else {
+            Write-Error $_.Exception.Message
+        }
+        exit 1
+    }
+}
+
+function ConvertFrom-JsonEscape {
+    param([Parameter(Mandatory)][string]$Text)
+    $regex = [System.Text.RegularExpressions.Regex]'\\u([0-9a-fA-F]{4})'
+    $sb = New-Object System.Text.StringBuilder
+    $last = 0
+    foreach ($m in $regex.Matches($Text)) {
+        [void]$sb.Append($Text.Substring($last, $m.Index - $last))
+        [void]$sb.Append([char][Convert]::ToInt32($m.Groups[1].Value, 16))
+        $last = $m.Index + $m.Length
+    }
+    [void]$sb.Append($Text.Substring($last))
+    return $sb.ToString()
+}
+
 function Format-Output {
     param([string]$Json, [switch]$Raw)
     if ($Raw) { Write-Output $Json; return }
     try {
         $obj = $Json | ConvertFrom-Json
-        Write-Output ($obj | ConvertTo-Json -Depth 100)
+        $pretty = $obj | ConvertTo-Json -Depth 100
+        if ($pretty -is [System.Array]) { $pretty = $pretty -join "`n" }
+        Write-Output (ConvertFrom-JsonEscape -Text $pretty)
     } catch {
         Write-Output $Json
     }
@@ -71,6 +110,10 @@ Commands:
   search-repos -q <keyword>         搜索仓库
   issues  -o <owner> -r <repo> [-s state] [-p page] [-n perPage]
                                     列出仓库 issue
+  issue   -o <owner> -r <repo> -i <number>
+                                    获取指定 issue 详情（标题/状态/正文）
+  issue-comment -o <owner> -r <repo> -i <number> --body-file <path> | --body <text>
+                                    在指定 issue 下发表评论
 
 Options:
   -o, --owner <owner>      仓库所有者
@@ -79,6 +122,9 @@ Options:
   -s, --state <state>      issue 状态: open|closed|all (默认: all)
   -p, --page <n>           页码 (默认: 1)
   -n, --per-page <n>       每页数量 (默认: 50, 最大: 100)
+  -i, --issue <number>     issue 编号 (issue/issue-comment 必填)
+      --body-file <path>   评论正文文件路径 (issue-comment 二选一)
+      --body <text>        评论正文 (issue-comment 二选一)
   --token <token>          GitCode 访问令牌 (默认: $GITCODE_TOKEN)
   --base <url>             API 基础地址 (默认: https://api.gitcode.com/api/v5)
   --raw                    输出原始 JSON (不格式化)
@@ -102,6 +148,9 @@ $query = ""
 $state = "all"
 $page = 1
 $perPage = 50
+$issue = 0
+$bodyFile = ""
+$bodyText = ""
 
 $i = 0
 while ($i -lt $rest.Count) {
@@ -112,6 +161,9 @@ while ($i -lt $rest.Count) {
     elseif ($a -eq "-s" -or $a -eq "--state") { $state = [string]$rest[$i + 1]; $i += 2 }
     elseif ($a -eq "-p" -or $a -eq "--page") { $page = [int]$rest[$i + 1]; $i += 2 }
     elseif ($a -eq "-n" -or $a -eq "--per-page") { $perPage = [int]$rest[$i + 1]; $i += 2 }
+    elseif ($a -eq "-i" -or $a -eq "--issue") { $issue = [int]$rest[$i + 1]; $i += 2 }
+    elseif ($a -eq "--body-file") { $bodyFile = [string]$rest[$i + 1]; $i += 2 }
+    elseif ($a -eq "--body") { $bodyText = [string]$rest[$i + 1]; $i += 2 }
     elseif ($a -eq "--token") { $tokenArg = [string]$rest[$i + 1]; $i += 2 }
     elseif ($a -eq "--base") { $ApiBase = [string]$rest[$i + 1]; $i += 2 }
     elseif ($a -eq "--raw") { $raw = $true; $i += 1 }
@@ -148,8 +200,46 @@ switch ($cmd) {
         $json = Invoke-GitCodeApi -Url $url -Token $token
         Format-Output -Json $json -Raw:$raw
     }
+    "issue" {
+        if (-not $owner -or -not $repo -or $issue -le 0) { Write-Error "issue 命令需要 -o <owner> -r <repo> -i <issueNumber>"; exit 1 }
+        $url = "$ApiBase/repos/$owner/$repo/issues/$issue"
+        $json = Invoke-GitCodeApi -Url $url -Token $token
+        if ($raw) {
+            Write-Output $json
+        } else {
+            try {
+                $obj = $json | ConvertFrom-Json
+                Write-Output "=== ISSUE #$issue ==="
+                Write-Output "标题: $($obj.title)"
+                Write-Output "状态: $($obj.state)"
+                if ($obj.user -and $obj.user.login) { Write-Output "作者: $($obj.user.login)" }
+                if ($obj.created_at) { Write-Output "创建: $($obj.created_at)" }
+                Write-Output ""
+                Write-Output "--- 正文 ---"
+                if ($obj.body) { Write-Output $obj.body }
+            } catch {
+                Write-Output $json
+            }
+        }
+    }
+    "issue-comment" {
+        if (-not $owner -or -not $repo -or $issue -le 0) { Write-Error "issue-comment 命令需要 -o <owner> -r <repo> -i <issueNumber> 及 --body-file <path> 或 --body <text>"; exit 1 }
+        $text = ""
+        if ($bodyFile) {
+            if (-not (Test-Path $bodyFile)) { Write-Error "body 文件不存在: $bodyFile"; exit 1 }
+            $text = Get-Content -Raw -Encoding UTF8 $bodyFile
+        } elseif ($bodyText) {
+            $text = $bodyText
+        } else {
+            Write-Error "issue-comment 命令需要 --body-file <path> 或 --body <text>"; exit 1
+        }
+        $url = "$ApiBase/repos/$owner/$repo/issues/$issue/comments"
+        $payload = @{ body = $text } | ConvertTo-Json -Depth 10 -Compress
+        $json = Invoke-GitCodeApiPost -Url $url -Token $token -Body $payload
+        Format-Output -Json $json -Raw:$raw
+    }
     default {
-        Write-Error "未知命令: $cmd（可用: user, repo, search-repos, issues）"
+        Write-Error "未知命令: $cmd（可用: user, repo, search-repos, issues, issue, issue-comment）"
         Show-Help
         exit 1
     }

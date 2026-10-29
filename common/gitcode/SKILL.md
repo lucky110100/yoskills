@@ -37,6 +37,7 @@ cd yoskills\common\gitcode
 .\gitcode.ps1 search-repos -q agent-core-java
 .\gitcode.ps1 repo -o openJiuwen -r agent-core-java
 .\gitcode.ps1 issues -o openJiuwen -r agent-core-java -s all
+.\gitcode.ps1 issue -o openJiuwen -r agent-core-java -i 132
 ```
 
 ### Linux (Bash)
@@ -58,6 +59,7 @@ chmod +x gitcode.sh
 | `repo -o <owner> -r <repo>` | 获取仓库详情 | `GET /api/v5/repos/{owner}/{repo}` |
 | `search-repos -q <keyword>` | 搜索仓库 | `GET /api/v5/search/repositories?q=` |
 | `issues -o <owner> -r <repo>` | 列出仓库 issue | `GET /api/v5/repos/{owner}/{repo}/issues` |
+| `issue-comment -o <owner> -r <repo> -i <number> --body-file <path>` | 在指定 issue 下发表评论 | `POST /api/v5/repos/{owner}/{repo}/issues/{number}/comments` |
 
 ## issues 命令参数
 
@@ -80,7 +82,9 @@ chmod +x gitcode.sh
 
 ## 输出
 
-默认输出格式化后的 JSON（UTF-8）。加 `--raw` 可输出原始 JSON，便于配合 `jq` 等工具管道处理。
+默认输出格式化后的 JSON（UTF-8），中文等非 ASCII 字符直接可读：`gitcode.ps1` 在 Windows PowerShell 5.1 下会对 `ConvertTo-Json` 产生的 `\uXXXX` 做反转义；`gitcode.sh` 经 `jq`/`python3` 输出 UTF-8。`issue` 命令默认输出标题/状态/正文的纯文本。加 `--raw` 可输出原始 JSON，便于配合 `jq` 等工具管道处理。
+
+> 维护提示：`gitcode.ps1` 必须以 UTF-8 **带 BOM**（`EF BB BF`）保存，否则 Windows PowerShell 5.1 会按系统默认编码（如 GBK）解析，导致中文乱码与 `<`/`&` 解析报错。重新保存时务必保留 BOM。
 
 ## 认证方式
 
@@ -92,12 +96,12 @@ CLI 使用 `Authorization: Bearer <token>` 请求头进行认证，令牌不会�
 2. `GET /api/v5/search/repositories?q=<keyword>` — 搜索仓库
 3. `GET /api/v5/repos/{owner}/{repo}/issues` — 列出仓库 issue
 4. `GET /api/v5/repos/{owner}/{repo}` — 获取仓库详情
+5. `POST /api/v5/repos/{owner}/{repo}/issues/{number}/comments` — 发表 issue 评论（`--body-file <path>` 或 `--body <text>`）
 
 ## 后续可扩展接口
 
 按需补充以下接口到 CLI（修改 `gitcode.ps1` / `gitcode.sh` 即可）：
 
-- `GET /api/v5/repos/{owner}/{repo}/issues/{number}` — issue 详情
 - `GET /api/v5/repos/{owner}/{repo}/issues/{number}/comments` — issue 评论
 - `GET /api/v5/repos/{owner}/{repo}/pulls` — PR 列表
 - `GET /api/v5/repos/{owner}/{repo}/branches` — 分支列表

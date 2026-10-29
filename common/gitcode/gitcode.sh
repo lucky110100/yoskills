@@ -63,6 +63,17 @@ url_encode() {
     fi
 }
 
+json_field() {
+    local json="$1" key="$2"
+    if command -v jq >/dev/null 2>&1; then
+        printf '%s' "$json" | jq -r --arg k "$key" '.[$k] // ""'
+    elif command -v python3 >/dev/null 2>&1; then
+        printf '%s' "$json" | python3 -c "import sys,json;print(json.load(sys.stdin).get('$key',''))"
+    else
+        echo ""
+    fi
+}
+
 show_help() {
     cat <<'EOF'
 GitCode API CLI (Bash)
@@ -104,6 +115,7 @@ QUERY=""
 STATE="all"
 PAGE=1
 PER_PAGE=50
+ISSUE=""
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -113,6 +125,7 @@ while [ "$#" -gt 0 ]; do
         -s|--state)    STATE="$2"; shift 2 ;;
         -p|--page)     PAGE="$2"; shift 2 ;;
         -n|--per-page) PER_PAGE="$2"; shift 2 ;;
+        -i|--issue)    ISSUE="$2"; shift 2 ;;
         --token)       TOKEN_ARG="$2"; shift 2 ;;
         --base)        API_BASE="$2"; shift 2 ;;
         --raw)         RAW="true"; shift ;;
