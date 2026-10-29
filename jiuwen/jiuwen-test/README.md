@@ -36,4 +36,7 @@ mvn clean test -Dtest='!com/openjiuwen/test/cases/knowledge_base/**'
 
 冒烟
 mvn clean test -Dgroups='smoke' -Dtest='!com/openjiuwen/test/cases/knowledge_base/**'
+
+cd D:\jiuwen\main\jiuwen-test
+mvn clean test -Dtest="ToolGuardrailE2E001,ToolGuardrailE2E002" -DfailIfNoTests=false
 ```
