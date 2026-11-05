@@ -10,7 +10,7 @@
         display: 'flex',
         flexDirection: 'column',
         gap: 8,
-        marginBottom: 40,
+        marginBottom: 32,
     }}>
         <Text style={{
             fontSize: 14,
@@ -38,7 +38,7 @@
     <Box style={{
         display: 'flex',
         flexDirection: 'column',
-        gap: 22,
+        gap: 18,
     }}>
         <Box style={{
             display: 'flex',
@@ -80,6 +80,12 @@
             <Box style={{ width: 1, height: 28, background: '#E5E5E5' }} />
             <Text style={{ fontSize: 22, color: '#333333', fontWeight: 'bold', flex: 1 }}>本地实践：jiuwenswarm RSI 归类分析</Text>
             <Text style={{ fontSize: 16, color: '#999999' }}>P15-P18</Text>
+        </Box>
+        <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 24 }}>
+            <Text style={{ fontSize: 28, color: '#C8102E', fontWeight: 'bold', width: 48 }}>07</Text>
+            <Box style={{ width: 1, height: 28, background: '#E5E5E5' }} />
+            <Text style={{ fontSize: 22, color: '#333333', fontWeight: 'bold', flex: 1 }}>落地思考：数据、实践与开放讨论</Text>
+            <Text style={{ fontSize: 16, color: '#999999' }}>P20-P25</Text>
         </Box>
     </Box>
 </Slide>

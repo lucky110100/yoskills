@@ -1,0 +1,132 @@
+<Slide style={{
+    width: '1280px',
+    height: '720px',
+    background: '#FFFFFF',
+    padding: '50px 80px',
+    display: 'flex',
+    flexDirection: 'column',
+}}>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
+        marginBottom: 24,
+    }}>
+        <Text style={{ fontSize: 14, color: '#C8102E', fontWeight: 'bold' }}>07 落地思考</Text>
+        <Text style={{ fontSize: 30, color: '#1A1A1A', fontWeight: 'bold' }}>开放讨论</Text>
+        <Box style={{ width: '100%', height: 2, background: '#C8102E', marginTop: 2 }} />
+    </Box>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'row',
+        gap: 24,
+        flex: 1,
+    }}>
+        <Box style={{
+            flex: 1,
+            border: '1px solid #E5E5E5',
+            borderRadius: 8,
+            padding: 24,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 16,
+        }}>
+            <Box style={{ display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                <Box style={{ width: 6, height: 24, background: '#C8102E', borderRadius: 2 }} />
+                <Text style={{ fontSize: 20, color: '#C8102E', fontWeight: 'bold' }}>个人经验</Text>
+            </Box>
+            <Box style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <Box style={{
+                    background: '#F8F8F8',
+                    borderRadius: 8,
+                    padding: 16,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 6,
+                }}>
+                    <Text style={{ fontSize: 16, color: '#333333', fontWeight: 'bold', lineHeight: 1.5 }}>
+                        个人经验积累：有用，但不具备优势
+                    </Text>
+                    <Text style={{ fontSize: 14, color: '#999999', lineHeight: 1.5 }}>
+                        可以被快速复制
+                    </Text>
+                </Box>
+                <Box style={{
+                    background: '#FFF5F5',
+                    borderRadius: 8,
+                    padding: 16,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 6,
+                }}>
+                    <Text style={{ fontSize: 16, color: '#C8102E', fontWeight: 'bold' }}>
+                        发挥优势
+                    </Text>
+                    <Box style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <Box style={{ display: 'flex', flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                            <Box style={{ width: 6, height: 6, borderRadius: 3, background: '#C8102E', flexShrink: 0 }} />
+                            <Text style={{ fontSize: 14, color: '#333333' }}>打标签</Text>
+                        </Box>
+                        <Box style={{ display: 'flex', flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                            <Box style={{ width: 6, height: 6, borderRadius: 3, background: '#C8102E', flexShrink: 0 }} />
+                            <Text style={{ fontSize: 14, color: '#333333' }}>真值评估</Text>
+                        </Box>
+                    </Box>
+                </Box>
+            </Box>
+        </Box>
+        <Box style={{
+            flex: 1,
+            border: '1px solid #E5E5E5',
+            borderRadius: 8,
+            padding: 24,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 16,
+        }}>
+            <Box style={{ display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                <Box style={{ width: 6, height: 24, background: '#C8102E', borderRadius: 2 }} />
+                <Text style={{ fontSize: 20, color: '#C8102E', fontWeight: 'bold' }}>核心资产：数据，算力</Text>
+            </Box>
+            <Box style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <Box style={{
+                    background: '#F8F8F8',
+                    borderRadius: 8,
+                    padding: 16,
+                    display: 'flex',
+                    flexDirection: 'row',
+                    gap: 12,
+                    alignItems: 'center',
+                }}>
+                    <Box style={{ background: '#C8102E', borderRadius: 6, padding: '8px 14px', flexShrink: 0 }}>
+                        <Text style={{ fontSize: 15, color: '#FFFFFF', fontWeight: 'bold' }}>蒸汽机</Text>
+                    </Box>
+                    <Text style={{ fontSize: 15, color: '#333333' }}>解决重复体力劳动</Text>
+                </Box>
+                <Box style={{
+                    background: '#F8F8F8',
+                    borderRadius: 8,
+                    padding: 16,
+                    display: 'flex',
+                    flexDirection: 'row',
+                    gap: 12,
+                    alignItems: 'center',
+                }}>
+                    <Box style={{ background: '#C8102E', borderRadius: 6, padding: '8px 14px', flexShrink: 0 }}>
+                        <Text style={{ fontSize: 15, color: '#FFFFFF', fontWeight: 'bold' }}>AI</Text>
+                    </Box>
+                    <Text style={{ fontSize: 15, color: '#333333' }}>解决重复脑力劳动</Text>
+                </Box>
+            </Box>
+            <Box style={{
+                marginTop: 'auto',
+                textAlign: 'center',
+                padding: 20,
+            }}>
+                <Text style={{ fontSize: 28, color: '#C8102E', fontWeight: 'bold' }}>
+                    圈地运动？
+                </Text>
+            </Box>
+        </Box>
+    </Box>
+</Slide>

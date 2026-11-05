@@ -1,0 +1,149 @@
+<Slide style={{
+    width: '1280px',
+    height: '720px',
+    background: '#FFFFFF',
+    padding: '50px 80px',
+    display: 'flex',
+    flexDirection: 'column',
+}}>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
+        marginBottom: 24,
+    }}>
+        <Text style={{ fontSize: 14, color: '#C8102E', fontWeight: 'bold' }}>07 落地思考</Text>
+        <Text style={{ fontSize: 30, color: '#1A1A1A', fontWeight: 'bold' }}>实践案例 —— codecheck 代码规范</Text>
+        <Box style={{ width: '100%', height: 2, background: '#C8102E', marginTop: 2 }} />
+    </Box>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+        flex: 1,
+    }}>
+        <Box style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 12,
+            alignItems: 'flex-start',
+        }}>
+            <Box style={{ width: 32, height: 32, borderRadius: 6, background: '#C8102E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Text style={{ fontSize: 14, color: '#FFFFFF', fontWeight: 'bold' }}>1</Text>
+            </Box>
+            <Box style={{
+                flex: 1,
+                border: '1px solid #E5E5E5',
+                borderRadius: 8,
+                padding: 14,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 4,
+            }}>
+                <Text style={{ fontSize: 16, color: '#333333', fontWeight: 'bold' }}>抓包分析网页请求并模拟请求</Text>
+                <Text style={{ fontSize: 13, color: '#999999' }}>原始数据 6.7G</Text>
+            </Box>
+        </Box>
+        <Box style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 12,
+            alignItems: 'flex-start',
+        }}>
+            <Box style={{ width: 32, height: 32, borderRadius: 6, background: '#C8102E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Text style={{ fontSize: 14, color: '#FFFFFF', fontWeight: 'bold' }}>2</Text>
+            </Box>
+            <Box style={{
+                flex: 1,
+                border: '1px solid #E5E5E5',
+                borderRadius: 8,
+                padding: 14,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 4,
+            }}>
+                <Text style={{ fontSize: 16, color: '#333333', fontWeight: 'bold' }}>LLM 调用分析</Text>
+                <Text style={{ fontSize: 13, color: '#999999' }}>初步分析，输出方法论</Text>
+            </Box>
+        </Box>
+        <Box style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 12,
+            alignItems: 'flex-start',
+        }}>
+            <Box style={{ width: 32, height: 32, borderRadius: 6, background: '#C8102E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Text style={{ fontSize: 14, color: '#FFFFFF', fontWeight: 'bold' }}>3</Text>
+            </Box>
+            <Box style={{
+                flex: 1,
+                border: '1px solid #E5E5E5',
+                borderRadius: 8,
+                padding: 14,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+            }}>
+                <Text style={{ fontSize: 16, color: '#333333', fontWeight: 'bold' }}>codecheck 分类统计和快速检查</Text>
+                <Text style={{ fontSize: 13, color: '#999999' }}>具体分析，优化方法论，生成技能（耗时 1h13m）</Text>
+                <Box style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    gap: 8,
+                    alignItems: 'flex-start',
+                    marginTop: 4,
+                    marginLeft: 16,
+                }}>
+                    <Box style={{ width: 24, height: 24, borderRadius: 4, background: '#F8F8F8', border: '1px solid #C8102E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Text style={{ fontSize: 10, color: '#C8102E', fontWeight: 'bold' }}>3.1</Text>
+                    </Box>
+                    <Box style={{
+                        flex: 1,
+                        background: '#F8F8F8',
+                        borderRadius: 6,
+                        padding: 10,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 2,
+                    }}>
+                        <Text style={{ fontSize: 14, color: '#333333', fontWeight: 'bold' }}>jiuwenswarm 示例</Text>
+                        <Text style={{ fontSize: 12, color: '#999999' }}>参考文档中的分析方法，codecheck 分类统计（耗时 27m）</Text>
+                    </Box>
+                </Box>
+            </Box>
+        </Box>
+        <Box style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 12,
+            alignItems: 'flex-start',
+        }}>
+            <Box style={{ width: 32, height: 32, borderRadius: 6, background: '#C8102E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Text style={{ fontSize: 14, color: '#FFFFFF', fontWeight: 'bold' }}>4</Text>
+            </Box>
+            <Box style={{
+                flex: 1,
+                border: '1px solid #E5E5E5',
+                borderRadius: 8,
+                padding: 14,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 4,
+            }}>
+                <Text style={{ fontSize: 16, color: '#333333', fontWeight: 'bold' }}>workflow 并问题 + codecheck 速查</Text>
+                <Text style={{ fontSize: 13, color: '#999999' }}>对比流水线，应用方法论</Text>
+            </Box>
+        </Box>
+    </Box>
+    <Box style={{
+        background: '#F8F8F8',
+        borderLeft: '4px solid #C8102E',
+        borderRadius: 4,
+        padding: 12,
+        marginTop: 8,
+    }}>
+        <Text style={{ fontSize: 14, color: '#333333', lineHeight: 1.6 }}>
+            <span style={{ fontWeight: 'bold', color: '#C8102E' }}>数据驱动闭环</span>：示例采集 → 初步分析 → 具体分析 → 对比验证，方法论从数据中生长
+        </Text>
+    </Box>
+</Slide>

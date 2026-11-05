@@ -1,0 +1,125 @@
+<Slide style={{
+    width: '1280px',
+    height: '720px',
+    background: '#FFFFFF',
+    padding: '50px 80px',
+    display: 'flex',
+    flexDirection: 'column',
+}}>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
+        marginBottom: 24,
+    }}>
+        <Text style={{ fontSize: 14, color: '#C8102E', fontWeight: 'bold' }}>07 落地思考</Text>
+        <Text style={{ fontSize: 30, color: '#1A1A1A', fontWeight: 'bold' }}>扩展</Text>
+        <Box style={{ width: '100%', height: 2, background: '#C8102E', marginTop: 2 }} />
+    </Box>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'row',
+        gap: 24,
+        flex: 1,
+    }}>
+        <Box style={{
+            flex: 1,
+            border: '1px solid #E5E5E5',
+            borderRadius: 8,
+            padding: 24,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 16,
+        }}>
+            <Box style={{ display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                <Box style={{ width: 6, height: 24, background: '#C8102E', borderRadius: 2 }} />
+                <Text style={{ fontSize: 20, color: '#C8102E', fontWeight: 'bold' }}>关注服务</Text>
+            </Box>
+            <Box style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <Box style={{
+                    background: '#F8F8F8',
+                    borderRadius: 8,
+                    padding: 16,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 4,
+                }}>
+                    <Text style={{ fontSize: 16, color: '#333333', fontWeight: 'bold' }}>LLM 网关</Text>
+                    <Text style={{ fontSize: 13, color: '#999999' }}>模型调用统一入口</Text>
+                </Box>
+                <Box style={{
+                    background: '#F8F8F8',
+                    borderRadius: 8,
+                    padding: 16,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 4,
+                }}>
+                    <Text style={{ fontSize: 16, color: '#333333', fontWeight: 'bold' }}>LTS（日志服务）</Text>
+                    <Text style={{ fontSize: 13, color: '#999999' }}>调用日志采集与存储</Text>
+                </Box>
+                <Box style={{
+                    background: '#F8F8F8',
+                    borderRadius: 8,
+                    padding: 16,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 4,
+                }}>
+                    <Text style={{ fontSize: 16, color: '#333333', fontWeight: 'bold' }}>APM（调用链服务）</Text>
+                    <Text style={{ fontSize: 13, color: '#999999' }}>trace 追踪与性能分析</Text>
+                </Box>
+            </Box>
+        </Box>
+        <Box style={{
+            flex: 1,
+            border: '1px solid #E5E5E5',
+            borderRadius: 8,
+            padding: 24,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 16,
+        }}>
+            <Box style={{ display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                <Box style={{ width: 6, height: 24, background: '#C8102E', borderRadius: 2 }} />
+                <Text style={{ fontSize: 20, color: '#C8102E', fontWeight: 'bold' }}>产品规划</Text>
+            </Box>
+            <Box style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <Box style={{ display: 'flex', flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+                    <Box style={{ background: '#FFF5F5', borderRadius: 6, padding: '8px 16px' }}>
+                        <Text style={{ fontSize: 14, color: '#C8102E', fontWeight: 'bold' }}>服务端为主</Text>
+                    </Box>
+                    <Box style={{ background: '#FFF5F5', borderRadius: 6, padding: '8px 16px' }}>
+                        <Text style={{ fontSize: 14, color: '#C8102E', fontWeight: 'bold' }}>多端协同</Text>
+                    </Box>
+                    <Box style={{ background: '#FFF5F5', borderRadius: 6, padding: '8px 16px' }}>
+                        <Text style={{ fontSize: 14, color: '#C8102E', fontWeight: 'bold' }}>多人多角色</Text>
+                    </Box>
+                </Box>
+                <Box style={{ display: 'flex', flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+                    <Box style={{ background: '#F8F8F8', borderRadius: 6, padding: '8px 16px' }}>
+                        <Text style={{ fontSize: 14, color: '#333333' }}>轨迹追踪</Text>
+                    </Box>
+                </Box>
+                <Box style={{
+                    background: '#F8F8F8',
+                    borderRadius: 8,
+                    padding: 16,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 6,
+                }}>
+                    <Text style={{ fontSize: 16, color: '#C8102E', fontWeight: 'bold' }}>RSI-adjacent</Text>
+                    <Text style={{ fontSize: 13, color: '#666666', lineHeight: 1.5 }}>
+                        人类监督下的后继系统演进，非全自动 RSI
+                    </Text>
+                </Box>
+            </Box>
+            <Box style={{ marginTop: 'auto', background: '#FFF5F5', borderRadius: 6, padding: 12 }}>
+                <Text style={{ fontSize: 13, color: '#C8102E', fontWeight: 'bold' }}>
+                    核心方向：服务端为主，多端协同，人类在环
+                </Text>
+            </Box>
+        </Box>
+    </Box>
+</Slide>
