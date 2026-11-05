@@ -1,0 +1,115 @@
+<Slide style={{
+    width: '1280px',
+    height: '720px',
+    background: '#FFFFFF',
+    padding: '60px 80px',
+    display: 'flex',
+    flexDirection: 'column',
+}}>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 6,
+        marginBottom: 32,
+    }}>
+        <Text style={{ fontSize: 14, color: '#C8102E', fontWeight: 'bold' }}>02 正在发生什么</Text>
+        <Text style={{ fontSize: 36, color: '#1A1A1A', fontWeight: 'bold' }}>Anthropic 披露：数据冲击</Text>
+        <Box style={{ width: '100%', height: 2, background: '#C8102E', marginTop: 4 }} />
+    </Box>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'row',
+        gap: 32,
+        flex: 1,
+    }}>
+        <Box style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 28,
+        }}>
+            <Box style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+            }}>
+                <Text style={{ fontSize: 16, color: '#999999', fontWeight: 'bold' }}>生产代码编写占比</Text>
+                <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
+                    <Text style={{ fontSize: 84, color: '#C8102E', fontWeight: 'bold', lineHeight: 1 }}>
+                        80
+                    </Text>
+                    <Text style={{ fontSize: 36, color: '#C8102E', fontWeight: 'bold', paddingBottom: 12 }}>
+                        %
+                    </Text>
+                </Box>
+                <Text style={{ fontSize: 16, color: '#666666', lineHeight: 1.5 }}>
+                    Claude 编写 Anthropic 生产代码占比（2025.2 不到 10%→2026.5 达 80%）
+                </Text>
+            </Box>
+            <Box style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+            }}>
+                <Text style={{ fontSize: 16, color: '#999999', fontWeight: 'bold' }}>单次交付 bug 修复</Text>
+                <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
+                    <Text style={{ fontSize: 84, color: '#C8102E', fontWeight: 'bold', lineHeight: 1 }}>
+                        800
+                    </Text>
+                    <Text style={{ fontSize: 24, color: '#666666', fontWeight: 'bold', paddingBottom: 14 }}>
+                        + 个
+                    </Text>
+                </Box>
+                <Text style={{ fontSize: 16, color: '#666666', lineHeight: 1.5 }}>
+                    2026.4 单次 Claude 辅助工作交付，相当于约 4 年人工工程量，数天内完成
+                </Text>
+            </Box>
+        </Box>
+        <Box style={{ width: 2, background: '#F0F0F0' }} />
+        <Box style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 28,
+            justifyContent: 'center',
+        }}>
+            <Box style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+            }}>
+                <Text style={{ fontSize: 16, color: '#999999', fontWeight: 'bold' }}>工程师季度合并代码量</Text>
+                <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
+                    <Text style={{ fontSize: 84, color: '#C8102E', fontWeight: 'bold', lineHeight: 1 }}>
+                        8
+                    </Text>
+                    <Text style={{ fontSize: 24, color: '#666666', fontWeight: 'bold', paddingBottom: 14 }}>
+                        倍
+                    </Text>
+                </Box>
+                <Text style={{ fontSize: 16, color: '#666666', lineHeight: 1.5 }}>
+                    工程师季度合并代码量是 2021–2025 基线水平的 8 倍
+                </Text>
+            </Box>
+            <Box style={{
+                display: 'flex',
+                flexDirection: 'row',
+                gap: 16,
+                alignItems: 'flex-start',
+                background: '#F8F8F8',
+                borderLeft: '4px solid #C8102E',
+                borderRadius: 4,
+                padding: 20,
+            }}>
+                <Box style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 16, color: '#C8102E', fontWeight: 'bold', marginBottom: 8 }}>
+                        报告来源
+                    </Text>
+                    <Text style={{ fontSize: 16, color: '#333333', lineHeight: 1.6 }}>
+                        Anthropic 联合创始人 Jack Clark 与 Marina Favaro 发布《When AI Builds Itself》（2026.5）
+                    </Text>
+                </Box>
+            </Box>
+        </Box>
+    </Box>
+</Slide>

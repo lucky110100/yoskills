@@ -1,0 +1,133 @@
+<Slide style={{
+    width: '1280px',
+    height: '720px',
+    background: '#FFFFFF',
+    padding: '50px 80px',
+    display: 'flex',
+    flexDirection: 'column',
+}}>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
+        marginBottom: 20,
+    }}>
+        <Text style={{ fontSize: 14, color: '#C8102E', fontWeight: 'bold' }}>03 技术机制</Text>
+        <Text style={{ fontSize: 32, color: '#1A1A1A', fontWeight: 'bold' }}>第三代：Harness 递归改进</Text>
+        <Box style={{ width: '100%', height: 2, background: '#C8102E', marginTop: 2 }} />
+    </Box>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'row',
+        gap: 24,
+        flex: 1,
+    }}>
+        <Box style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 14,
+        }}>
+            <Box style={{
+                border: '1px solid #E5E5E5',
+                borderRadius: 8,
+                padding: 16,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+            }}>
+                <Text style={{ fontSize: 18, color: '#C8102E', fontWeight: 'bold' }}>
+                    RRSI（Google, 2026.9）
+                </Text>
+                <Text style={{ fontSize: 14, color: '#999999' }}>
+                    Regularized Recursive Self-Improvement
+                </Text>
+                <Text style={{ fontSize: 16, color: '#333333', lineHeight: 1.5 }}>
+                    针对固定 evolve 集改进 harness，通过<span style={{ fontWeight: 'bold', color: '#C8102E' }}>七层正则化</span>约束搜索轨迹
+                </Text>
+                <Box style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4 }}>
+                    <Text style={{ fontSize: 16, color: '#333333' }}>
+                        Terminal-Bench 2.1: 74.2 → <span style={{ fontWeight: 'bold', color: '#C8102E' }}>80.2</span> (+6.0)
+                    </Text>
+                    <Text style={{ fontSize: 16, color: '#666666' }}>
+                        OOD 保持：SWE-bench +1.8
+                    </Text>
+                </Box>
+            </Box>
+            <Box style={{
+                background: '#F8F8F8',
+                borderRadius: 6,
+                padding: 14,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+            }}>
+                <Text style={{ fontSize: 14, color: '#666666', fontWeight: 'bold' }}>
+                    七层正则化
+                </Text>
+                <Text style={{ fontSize: 14, color: '#666666', lineHeight: 1.5 }}>
+                    退火编辑预算 · 历史条件提议 · 停滞重定向 · 批评者预筛 · 噪声调整下限 · 成本规则 · 剪枝
+                </Text>
+            </Box>
+        </Box>
+        <Box style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 14,
+        }}>
+            <Box style={{
+                border: '1px solid #E5E5E5',
+                borderRadius: 8,
+                padding: 16,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+            }}>
+                <Text style={{ fontSize: 18, color: '#C8102E', fontWeight: 'bold' }}>
+                    Harness²（Google, 2026.10）
+                </Text>
+                <Text style={{ fontSize: 14, color: '#999999' }}>
+                    Recursive Agent Harnessing for an Open World
+                </Text>
+                <Text style={{ fontSize: 16, color: '#333333', lineHeight: 1.5 }}>
+                    面向开放世界，<span style={{ fontWeight: 'bold', color: '#C8102E' }}>无需 ground-truth</span> 的对比式精炼
+                </Text>
+                <Box style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 4 }}>
+                    <Text style={{ fontSize: 16, color: '#333333' }}>
+                        WorkBuddy-Bench: +<span style={{ fontWeight: 'bold', color: '#C8102E' }}>11.5</span>
+                    </Text>
+                    <Text style={{ fontSize: 16, color: '#666666' }}>
+                        LAB partial pass rate +11.8
+                    </Text>
+                </Box>
+            </Box>
+            <Box style={{
+                background: '#F8F8F8',
+                borderRadius: 6,
+                padding: 14,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+            }}>
+                <Text style={{ fontSize: 14, color: '#666666', fontWeight: 'bold' }}>
+                    Propose-Probe-Compose 三步
+                </Text>
+                <Text style={{ fontSize: 14, color: '#666666', lineHeight: 1.5 }}>
+                    提出编辑 → 在同一任务上探测效果 → 从行为对比中组合精炼，不需要标准答案
+                </Text>
+            </Box>
+        </Box>
+    </Box>
+    <Box style={{
+        background: '#F8F8F8',
+        borderLeft: '4px solid #C8102E',
+        borderRadius: 4,
+        padding: 14,
+        marginTop: 16,
+    }}>
+        <Text style={{ fontSize: 16, color: '#333333', lineHeight: 1.5 }}>
+            <span style={{ fontWeight: 'bold', color: '#C8102E' }}>与前两代的区别</span>：第一代改自身代码（需证明），第二代改代码/算法（靠测试），第三代改的是<span style={{ fontWeight: 'bold' }}>模型外围的一切非权重组件</span>——改动可见、可回滚、可审计，工程化程度远超前两代
+        </Text>
+    </Box>
+</Slide>

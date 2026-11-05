@@ -1,0 +1,170 @@
+<Slide style={{
+    width: '1280px',
+    height: '720px',
+    background: '#FFFFFF',
+    padding: '50px 80px',
+    display: 'flex',
+    flexDirection: 'column',
+}}>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
+        marginBottom: 16,
+    }}>
+        <Text style={{ fontSize: 14, color: '#C8102E', fontWeight: 'bold' }}>06 本地实践</Text>
+        <Text style={{ fontSize: 30, color: '#1A1A1A', fontWeight: 'bold' }}>完整示例：CSV 日期消歧优化（上）</Text>
+        <Box style={{ width: '100%', height: 2, background: '#C8102E', marginTop: 2 }} />
+    </Box>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'row',
+        gap: 16,
+        flex: 1,
+    }}>
+        <Box style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10,
+        }}>
+            <Box style={{
+                border: '1px solid #E5E5E5',
+                borderRadius: 8,
+                padding: 14,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+            }}>
+                <Box style={{ display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                    <Box style={{ width: 24, height: 24, borderRadius: 4, background: '#C8102E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Text style={{ fontSize: 12, color: '#FFFFFF', fontWeight: 'bold' }}>1</Text>
+                    </Box>
+                    <Text style={{ fontSize: 15, color: '#C8102E', fontWeight: 'bold' }}>冻结数据集</Text>
+                </Box>
+                <Box style={{ background: '#F8F8F8', borderRadius: 4, padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <Text style={{ fontSize: 9, color: '#333333', lineHeight: 1.4 }}>{'{'}</Text>
+                    <Text style={{ fontSize: 9, color: '#333333', lineHeight: 1.4 }}>{'  "dataset_id": "csv-date-normalize",'}</Text>
+                    <Text style={{ fontSize: 9, color: '#333333', lineHeight: 1.4 }}>{'  "cases": ['}</Text>
+                    <Text style={{ fontSize: 9, color: '#C8102E', lineHeight: 1.4 }}>{'    {"case_id": "c1",'}</Text>
+                    <Text style={{ fontSize: 9, color: '#333333', lineHeight: 1.4 }}>{'     "input": "把 orders.csv 的 order_date 列统一为 YYYY-MM-DD，输出到 out/orders.csv",'}</Text>
+                    <Text style={{ fontSize: 9, color: '#333333', lineHeight: 1.4 }}>{'     "reference": {"rubric": ["行数与表头不变","所有日期可解析","不可解析行原样保留"]}},'}</Text>
+                    <Text style={{ fontSize: 9, color: '#999999', lineHeight: 1.4 }}>{'    {"case_id": "c2", "input": "...", "reference": {"rubric": ["..."]}},'}</Text>
+                    <Text style={{ fontSize: 9, color: '#999999', lineHeight: 1.4 }}>{'    {"case_id": "c3", "input": "...", "reference": {"rubric": ["..."]}},'}</Text>
+                    <Text style={{ fontSize: 9, color: '#999999', lineHeight: 1.4 }}>{'    {"case_id": "c4", "input": "...", "reference": {"rubric": ["..."]}},'}</Text>
+                    <Text style={{ fontSize: 9, color: '#999999', lineHeight: 1.4 }}>{'    {"case_id": "c5", "input": "...", "reference": {"rubric": ["..."]}}'}</Text>
+                    <Text style={{ fontSize: 9, color: '#333333', lineHeight: 1.4 }}>{'  ]'}</Text>
+                    <Text style={{ fontSize: 9, color: '#333333', lineHeight: 1.4 }}>{'}'}</Text>
+                </Box>
+                <Text style={{ fontSize: 11, color: '#999999' }}>数据集复制快照 + sha256，本次运行只读</Text>
+            </Box>
+            <Box style={{
+                border: '1px solid #E5E5E5',
+                borderRadius: 8,
+                padding: 14,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+            }}>
+                <Box style={{ display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                    <Box style={{ width: 24, height: 24, borderRadius: 4, background: '#C8102E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Text style={{ fontSize: 12, color: '#FFFFFF', fontWeight: 'bold' }}>2</Text>
+                    </Box>
+                    <Text style={{ fontSize: 15, color: '#C8102E', fontWeight: 'bold' }}>H0 冻结基线</Text>
+                </Box>
+                <Box style={{ display: 'flex', flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
+                    <Box style={{ background: '#F8F8F8', borderRadius: 4, padding: '4px 10px' }}>
+                        <Text style={{ fontSize: 13, color: '#C8102E', fontWeight: 'bold' }}>c1: 0.40</Text>
+                    </Box>
+                    <Box style={{ background: '#F8F8F8', borderRadius: 4, padding: '4px 10px' }}>
+                        <Text style={{ fontSize: 13, color: '#666666' }}>c2: 0.85</Text>
+                    </Box>
+                    <Box style={{ background: '#F8F8F8', borderRadius: 4, padding: '4px 10px' }}>
+                        <Text style={{ fontSize: 13, color: '#666666' }}>c3: 0.90</Text>
+                    </Box>
+                    <Box style={{ background: '#F8F8F8', borderRadius: 4, padding: '4px 10px' }}>
+                        <Text style={{ fontSize: 13, color: '#666666' }}>c4: 0.75</Text>
+                    </Box>
+                    <Box style={{ background: '#F8F8F8', borderRadius: 4, padding: '4px 10px' }}>
+                        <Text style={{ fontSize: 13, color: '#666666' }}>c5: 0.60</Text>
+                    </Box>
+                </Box>
+                <Text style={{ fontSize: 14, color: '#333333', fontWeight: 'bold' }}>mean = 0.70</Text>
+                <Text style={{ fontSize: 12, color: '#999999' }}>c1 失败原因：03/04/2026 按 DD/MM 解析成 4 月 3 日，3 行解析错误</Text>
+            </Box>
+        </Box>
+        <Box style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10,
+        }}>
+            <Box style={{
+                border: '1px solid #E5E5E5',
+                borderRadius: 8,
+                padding: 14,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+            }}>
+                <Box style={{ display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                    <Box style={{ width: 24, height: 24, borderRadius: 4, background: '#C8102E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Text style={{ fontSize: 12, color: '#FFFFFF', fontWeight: 'bold' }}>3</Text>
+                    </Box>
+                    <Text style={{ fontSize: 15, color: '#C8102E', fontWeight: 'bold' }}>归因</Text>
+                </Box>
+                <Text style={{ fontSize: 13, color: '#666666', lineHeight: 1.5 }}>
+                    mechanism_attributor 读 trace 发现：日期按 DD/MM 格式解析，判定失败机制是<span style={{ color: '#C8102E', fontWeight: 'bold' }}>指令缺失</span>
+                </Text>
+                <Box style={{ background: '#FFF5F5', borderRadius: 4, padding: '4px 10px', alignSelf: 'flex-start' }}>
+                    <Text style={{ fontSize: 13, color: '#C8102E', fontWeight: 'bold' }}>lever = instruction</Text>
+                </Box>
+            </Box>
+            <Box style={{
+                border: '1px solid #E5E5E5',
+                borderRadius: 8,
+                padding: 14,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+            }}>
+                <Box style={{ display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                    <Box style={{ width: 24, height: 24, borderRadius: 4, background: '#C8102E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Text style={{ fontSize: 12, color: '#FFFFFF', fontWeight: 'bold' }}>4</Text>
+                    </Box>
+                    <Text style={{ fontSize: 15, color: '#C8102E', fontWeight: 'bold' }}>规划：prompt / add</Text>
+                </Box>
+                <Text style={{ fontSize: 13, color: '#666666', lineHeight: 1.5 }}>
+                    1 个动作：新增 prompt_sections/files/date-ambiguity.md
+                </Text>
+                <Text style={{ fontSize: 12, color: '#999999' }}>路径前缀在白名单内，校验通过</Text>
+            </Box>
+            <Box style={{
+                border: '1px solid #E5E5E5',
+                borderRadius: 8,
+                padding: 14,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+                flex: 1,
+            }}>
+                <Box style={{ display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                    <Box style={{ width: 24, height: 24, borderRadius: 4, background: '#C8102E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Text style={{ fontSize: 12, color: '#FFFFFF', fontWeight: 'bold' }}>5</Text>
+                    </Box>
+                    <Text style={{ fontSize: 15, color: '#C8102E', fontWeight: 'bold' }}>执行：独立 worktree</Text>
+                </Box>
+                <Text style={{ fontSize: 13, color: '#333333', lineHeight: 1.5, fontWeight: 'bold' }}>歧义日期消歧规则</Text>
+                <Text style={{ fontSize: 12, color: '#666666', lineHeight: 1.5 }}>
+                    1. 扫全列取大于 12 的值作为消歧证据
+                </Text>
+                <Text style={{ fontSize: 12, color: '#666666', lineHeight: 1.5 }}>
+                    2. 无大于 12 的值时默认 DD/MM/YYYY
+                </Text>
+                <Text style={{ fontSize: 12, color: '#666666', lineHeight: 1.5 }}>
+                    3. 无法判定时该行原样输出
+                </Text>
+            </Box>
+        </Box>
+    </Box>
+</Slide>

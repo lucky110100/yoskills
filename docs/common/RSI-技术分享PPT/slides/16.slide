@@ -1,0 +1,92 @@
+<Slide style={{
+    width: '1280px',
+    height: '720px',
+    background: '#FFFFFF',
+    padding: '50px 80px',
+    display: 'flex',
+    flexDirection: 'column',
+}}>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
+        marginBottom: 20,
+    }}>
+        <Text style={{ fontSize: 14, color: '#C8102E', fontWeight: 'bold' }}>05 业界进展</Text>
+        <Text style={{ fontSize: 32, color: '#1A1A1A', fontWeight: 'bold' }}>五种评估范式横向对比</Text>
+        <Box style={{ width: '100%', height: 2, background: '#C8102E', marginTop: 2 }} />
+    </Box>
+    <Table
+        style={{ width: '100%', flex: 1 }}
+        defaultTextStyle={{ fontSize: 14, textAlign: 'center', color: '#333333' }}
+        defaultCellStyle={{
+            border: {
+                left: { width: 1, color: '#E5E5E5' },
+                right: { width: 1, color: '#E5E5E5' },
+                top: { width: 1, color: '#E5E5E5' },
+                bottom: { width: 1, color: '#E5E5E5' },
+            },
+        }}
+        cells={[
+            [
+                { text: '范式', textStyle: { bold: true, color: '#FFFFFF', fontSize: 15 }, cellStyle: { background: { color: '#C8102E' } } },
+                { text: '代表项目', textStyle: { bold: true, color: '#FFFFFF', fontSize: 15 }, cellStyle: { background: { color: '#C8102E' } } },
+                { text: 'Ground-truth 来源', textStyle: { bold: true, color: '#FFFFFF', fontSize: 15 }, cellStyle: { background: { color: '#C8102E' } } },
+                { text: '构造成本', textStyle: { bold: true, color: '#FFFFFF', fontSize: 15 }, cellStyle: { background: { color: '#C8102E' } } },
+                { text: '适用场景', textStyle: { bold: true, color: '#FFFFFF', fontSize: 15 }, cellStyle: { background: { color: '#C8102E' } } },
+                { text: '核心风险', textStyle: { bold: true, color: '#FFFFFF', fontSize: 15 }, cellStyle: { background: { color: '#C8102E' } } },
+            ],
+            [
+                { text: '固定基准\n+ held-out', textStyle: { bold: true, color: '#C8102E' } },
+                'RRSI、ALMA',
+                '预置基准的\n成功/失败判定',
+                { text: '高', textStyle: { color: '#C8102E', bold: true } },
+                '评估标准\n明确的领域',
+                '过拟合基准；\n无法应对开放世界',
+            ],
+            [
+                { text: '对比式\n行为评估', textStyle: { bold: true, color: '#C8102E' }, cellStyle: { background: { color: '#F8F8F8' } } },
+                { text: 'Harness²', cellStyle: { background: { color: '#F8F8F8' } } },
+                { text: '行为对比\n（无标准答案）', cellStyle: { background: { color: '#F8F8F8' } } },
+                { text: '低', textStyle: { color: '#333333', bold: true }, cellStyle: { background: { color: '#F8F8F8' } } },
+                { text: '开放世界、\n无标准答案', cellStyle: { background: { color: '#F8F8F8' } } },
+                { text: '行为改善\n不等于结果正确', cellStyle: { background: { color: '#F8F8F8' } } },
+            ],
+            [
+                { text: '环境反馈\n+ 验证门控', textStyle: { bold: true, color: '#C8102E' } },
+                'Recuris、\nAgentFactory',
+                '执行环境返回\n+ 检查器验证',
+                { text: '中', textStyle: { color: '#333333', bold: true } },
+                '长程任务、\n代码执行场景',
+                '环境反馈不完整；\n执行成功不等于方法正确',
+            ],
+            [
+                { text: '在线/离线\n交替蒸馏', textStyle: { bold: true, color: '#C8102E' }, cellStyle: { background: { color: '#F8F8F8' } } },
+                { text: 'EvolveR', cellStyle: { background: { color: '#F8F8F8' } } },
+                { text: '在线任务结果\n转化为离线原则验证', cellStyle: { background: { color: '#F8F8F8' } } },
+                { text: '中', textStyle: { color: '#333333', bold: true }, cellStyle: { background: { color: '#F8F8F8' } } },
+                { text: 'RAG、\n检索增强场景', cellStyle: { background: { color: '#F8F8F8' } } },
+                { text: '原则库冗余；\n交替延迟', cellStyle: { background: { color: '#F8F8F8' } } },
+            ],
+            [
+                { text: '多角色/\n多评估器交叉', textStyle: { bold: true, color: '#C8102E' } },
+                'ACE、EvoAgentX',
+                '内部互验/\n多维评分',
+                { text: '低-中', textStyle: { color: '#333333', bold: true } },
+                '无外部标准\n答案的场景',
+                '共享盲区；\n评估器间冲突',
+            ],
+        ]}
+    />
+    <Box style={{
+        background: '#F8F8F8',
+        borderLeft: '4px solid #C8102E',
+        borderRadius: 4,
+        padding: 12,
+        marginTop: 14,
+    }}>
+        <Text style={{ fontSize: 14, color: '#333333', lineHeight: 1.5 }}>
+            <span style={{ fontWeight: 'bold', color: '#C8102E' }}>工程启示</span>：选择哪种范式取决于任务是否有可自动判定的成功标准。有则用范式一最可靠；无则范式二（行为对比）最有前景；介于两者之间则范式三（环境反馈+验证门控）提供细粒度中间路线
+        </Text>
+    </Box>
+</Slide>

@@ -1,0 +1,162 @@
+<Slide style={{
+    width: '1280px',
+    height: '720px',
+    background: '#FFFFFF',
+    padding: '50px 80px',
+    display: 'flex',
+    flexDirection: 'column',
+}}>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
+        marginBottom: 18,
+    }}>
+        <Text style={{ fontSize: 14, color: '#C8102E', fontWeight: 'bold' }}>06 本地实践</Text>
+        <Text style={{ fontSize: 32, color: '#1A1A1A', fontWeight: 'bold' }}>C 类实现：六环节流水线 and RRSI 对照</Text>
+        <Box style={{ width: '100%', height: 2, background: '#C8102E', marginTop: 2 }} />
+    </Box>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'row',
+        gap: 20,
+        flex: 1,
+    }}>
+        <Box style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+        }}>
+            <Text style={{ fontSize: 16, color: '#C8102E', fontWeight: 'bold' }}>六环节流水线</Text>
+            <Box style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <Box style={{ display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                    <Box style={{ width: 24, height: 24, borderRadius: 4, background: '#C8102E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Text style={{ fontSize: 12, color: '#FFFFFF', fontWeight: 'bold' }}>1</Text>
+                    </Box>
+                    <Text style={{ fontSize: 14, color: '#333333', fontWeight: 'bold' }}>冻结输入</Text>
+                    <Text style={{ fontSize: 13, color: '#666666' }}>数据集 + harness 快照 sha256</Text>
+                </Box>
+                <Box style={{ display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                    <Box style={{ width: 24, height: 24, borderRadius: 4, background: '#C8102E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Text style={{ fontSize: 12, color: '#FFFFFF', fontWeight: 'bold' }}>2</Text>
+                    </Box>
+                    <Text style={{ fontSize: 14, color: '#333333', fontWeight: 'bold' }}>评测</Text>
+                    <Text style={{ fontSize: 13, color: '#666666' }}>真跑 harness，0-1 连续分</Text>
+                </Box>
+                <Box style={{ display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                    <Box style={{ width: 24, height: 24, borderRadius: 4, background: '#C8102E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Text style={{ fontSize: 12, color: '#FFFFFF', fontWeight: 'bold' }}>3</Text>
+                    </Box>
+                    <Text style={{ fontSize: 14, color: '#333333', fontWeight: 'bold' }}>归因</Text>
+                    <Text style={{ fontSize: 13, color: '#666666' }}>角色归因 then 机制归因</Text>
+                </Box>
+                <Box style={{ display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                    <Box style={{ width: 24, height: 24, borderRadius: 4, background: '#C8102E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Text style={{ fontSize: 12, color: '#FFFFFF', fontWeight: 'bold' }}>4</Text>
+                    </Box>
+                    <Text style={{ fontSize: 14, color: '#333333', fontWeight: 'bold' }}>规划</Text>
+                    <Text style={{ fontSize: 13, color: '#666666' }}>5 类 add/modify/remove/search</Text>
+                </Box>
+                <Box style={{ display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                    <Box style={{ width: 24, height: 24, borderRadius: 4, background: '#C8102E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Text style={{ fontSize: 12, color: '#FFFFFF', fontWeight: 'bold' }}>5</Text>
+                    </Box>
+                    <Text style={{ fontSize: 14, color: '#333333', fontWeight: 'bold' }}>执行</Text>
+                    <Text style={{ fontSize: 13, color: '#666666' }}>每 action 独立 worktree</Text>
+                </Box>
+                <Box style={{ display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                    <Box style={{ width: 24, height: 24, borderRadius: 4, background: '#C8102E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Text style={{ fontSize: 12, color: '#FFFFFF', fontWeight: 'bold' }}>6</Text>
+                    </Box>
+                    <Text style={{ fontSize: 14, color: '#333333', fontWeight: 'bold' }}>晋级</Text>
+                    <Text style={{ fontSize: 13, color: '#666666' }}>两阶段门禁</Text>
+                </Box>
+            </Box>
+            <Box style={{
+                background: '#F8F8F8',
+                borderLeft: '4px solid #C8102E',
+                borderRadius: 4,
+                padding: 10,
+                marginTop: 6,
+            }}>
+                <Text style={{ fontSize: 13, color: '#333333', lineHeight: 1.5 }}>
+                    <span style={{ fontWeight: 'bold', color: '#C8102E' }}>设计亮点</span>：先归因再动手——失败拆成"角色/机制/lever"三层，规划器拿到结构化上下文
+                </Text>
+            </Box>
+        </Box>
+        <Box style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+        }}>
+            <Text style={{ fontSize: 16, color: '#C8102E', fontWeight: 'bold' }}>与 RRSI 七层正则化对照</Text>
+            <Table
+                style={{ width: '100%', flex: 1 }}
+                defaultTextStyle={{ fontSize: 12, textAlign: 'center', color: '#333333' }}
+                defaultCellStyle={{
+                    border: {
+                        left: { width: 1, color: '#E5E5E5' },
+                        right: { width: 1, color: '#E5E5E5' },
+                        top: { width: 1, color: '#E5E5E5' },
+                        bottom: { width: 1, color: '#E5E5E5' },
+                    },
+                }}
+                cells={[
+                    [
+                        { text: 'RRSI 机制', textStyle: { bold: true, color: '#FFFFFF', fontSize: 13 }, cellStyle: { background: { color: '#C8102E' } } },
+                        { text: '本项目', textStyle: { bold: true, color: '#FFFFFF', fontSize: 13 }, cellStyle: { background: { color: '#C8102E' } } },
+                        { text: '状态', textStyle: { bold: true, color: '#FFFFFF', fontSize: 13 }, cellStyle: { background: { color: '#C8102E' } } },
+                    ],
+                    [
+                        '退火编辑预算',
+                        'max_actions=3',
+                        { text: '有上限\n不退火', textStyle: { color: '#D97706' } },
+                    ],
+                    [
+                        { text: '历史条件提议', cellStyle: { background: { color: '#F8F8F8' } } },
+                        { text: 'rejected_caps\n+ signatures', cellStyle: { background: { color: '#F8F8F8' } } },
+                        { text: '有', textStyle: { color: '#16A34A', bold: true }, cellStyle: { background: { color: '#F8F8F8' } } },
+                    ],
+                    [
+                        '停滞重定向',
+                        '只会停\n不会重定向',
+                        { text: '部分', textStyle: { color: '#D97706' } },
+                    ],
+                    [
+                        { text: '批评者预筛', cellStyle: { background: { color: '#F8F8F8' } } },
+                        { text: '危险符号黑名单\n无作弊检测器', cellStyle: { background: { color: '#F8F8F8' } } },
+                        { text: '部分', textStyle: { color: '#D97706' }, cellStyle: { background: { color: '#F8F8F8' } } },
+                    ],
+                    [
+                        '噪声调整下限',
+                        '固定 0.05\n无方差建模',
+                        { text: '缺', textStyle: { color: '#DC2626', bold: true } },
+                    ],
+                    [
+                        { text: '成本规则', cellStyle: { background: { color: '#F8F8F8' } } },
+                        { text: 'token 只记账\n不参与判定', cellStyle: { background: { color: '#F8F8F8' } } },
+                        { text: '缺', textStyle: { color: '#DC2626', bold: true }, cellStyle: { background: { color: '#F8F8F8' } } },
+                    ],
+                    [
+                        '剪枝',
+                        '无主动移除\n低贡献组件',
+                        { text: '缺', textStyle: { color: '#DC2626', bold: true } },
+                    ],
+                ]}
+            />
+        </Box>
+    </Box>
+    <Box style={{
+        background: '#FFF5F5',
+        borderRadius: 8,
+        padding: 12,
+        marginTop: 14,
+        border: '1px solid #F0D0D0',
+    }}>
+        <Text style={{ fontSize: 14, color: '#333333', lineHeight: 1.5 }}>
+            <span style={{ fontWeight: 'bold', color: '#C8102E' }}>关键缺口（P0）</span>：补噪声下限（阈值取 max(0.05, k*sigma)）+ 补成本规则（delta_score / delta_token 需超下限）——防止 harness 无限膨胀，推理成本线性上升而质量饱和
+        </Text>
+    </Box>
+</Slide>

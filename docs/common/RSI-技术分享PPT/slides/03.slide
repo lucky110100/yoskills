@@ -1,0 +1,143 @@
+<Slide style={{
+    width: '1280px',
+    height: '720px',
+    background: '#FFFFFF',
+    padding: '60px 80px',
+    display: 'flex',
+    flexDirection: 'column',
+}}>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 6,
+        marginBottom: 36,
+    }}>
+        <Text style={{
+            fontSize: 14,
+            color: '#C8102E',
+            fontWeight: 'bold',
+        }}>
+            01 RSI 是什么
+        </Text>
+        <Text style={{
+            fontSize: 36,
+            color: '#1A1A1A',
+            fontWeight: 'bold',
+        }}>
+            定义与误称澄清
+        </Text>
+        <Box style={{
+            width: '100%',
+            height: 2,
+            background: '#C8102E',
+            marginTop: 4,
+        }} />
+    </Box>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 24,
+        flex: 1,
+    }}>
+        <Box style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 32,
+        }}>
+            <Box style={{
+                flex: 1,
+                border: '2px solid #C8102E',
+                borderRadius: 8,
+                padding: 24,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+            }}>
+                <Text style={{ fontSize: 24, color: '#C8102E', fontWeight: 'bold' }}>
+                    RSI（严格定义）
+                </Text>
+                <Text style={{ fontSize: 18, color: '#333333', lineHeight: 1.6 }}>
+                    AI <span style={{ fontWeight: 'bold', color: '#C8102E' }}>完全自主</span>地重写自身权重
+                </Text>
+                <Text style={{ fontSize: 16, color: '#666666', lineHeight: 1.5 }}>
+                    人类不参与 · 仍是推测性的未来场景
+                </Text>
+            </Box>
+            <Box style={{
+                flex: 1,
+                border: '2px solid #E5E5E5',
+                borderRadius: 8,
+                padding: 24,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 12,
+            }}>
+                <Text style={{ fontSize: 24, color: '#333333', fontWeight: 'bold' }}>
+                    RSI-adjacent
+                </Text>
+                <Text style={{ fontSize: 18, color: '#333333', lineHeight: 1.6 }}>
+                    AI 在<span style={{ fontWeight: 'bold', color: '#C8102E' }}>人类监督</span>下参与后继系统开发
+                </Text>
+                <Text style={{ fontSize: 16, color: '#666666', lineHeight: 1.5 }}>
+                    在环中监督 · 2025–2026 年已成为生产现象
+                </Text>
+            </Box>
+        </Box>
+        <Box style={{
+            background: '#F8F8F8',
+            borderLeft: '4px solid #C8102E',
+            borderRadius: 4,
+            padding: 20,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10,
+        }}>
+            <Text style={{ fontSize: 16, color: '#C8102E', fontWeight: 'bold' }}>
+                CSA 2026 报告核心论断
+            </Text>
+            <Text style={{ fontSize: 18, color: '#333333', lineHeight: 1.6 }}>
+                "完全自主的 RSI 仍然是推测性的。但部分、受监督且工具化的 RSI 已经在进行中，而支撑这些受监督循环的基础设施恰恰构成了<span style={{ fontWeight: 'bold', color: '#C8102E' }}>新的攻击面</span>。"
+            </Text>
+        </Box>
+        <Box style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 24,
+        }}>
+            <Box style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'row',
+                gap: 12,
+                alignItems: 'flex-start',
+            }}>
+                <FAIcon name='exclamation-circle' style={{ fill: '#C8102E', width: 20, height: 20 }} />
+                <Box style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 16, color: '#333333', fontWeight: 'bold', marginBottom: 4 }}>
+                        误读一：科幻无关论
+                    </Text>
+                    <Text style={{ fontSize: 16, color: '#666666', lineHeight: 1.5 }}>
+                        "RSI 是科幻，与我们无关"——忽略了 RSI-adjacent 已在改变 AI 开发供应链
+                    </Text>
+                </Box>
+            </Box>
+            <Box style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'row',
+                gap: 12,
+                alignItems: 'flex-start',
+            }}>
+                <FAIcon name='exclamation-circle' style={{ fill: '#C8102E', width: 20, height: 20 }} />
+                <Box style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 16, color: '#333333', fontWeight: 'bold', marginBottom: 4 }}>
+                        误读二：失控恐慌论
+                    </Text>
+                    <Text style={{ fontSize: 16, color: '#666666', lineHeight: 1.5 }}>
+                        "RSI 已经失控了"——把受监督的工程实践误判为自主智能爆炸
+                    </Text>
+                </Box>
+            </Box>
+        </Box>
+    </Box>
+</Slide>

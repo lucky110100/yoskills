@@ -1,0 +1,114 @@
+<Slide style={{
+    width: '1280px',
+    height: '720px',
+    background: '#FFFFFF',
+    padding: '50px 80px',
+    display: 'flex',
+    flexDirection: 'column',
+}}>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
+        marginBottom: 20,
+    }}>
+        <Text style={{ fontSize: 14, color: '#C8102E', fontWeight: 'bold' }}>05 业界进展</Text>
+        <Text style={{ fontSize: 32, color: '#1A1A1A', fontWeight: 'bold' }}>C 类项目横向对比</Text>
+        <Box style={{ width: '100%', height: 2, background: '#C8102E', marginTop: 2 }} />
+    </Box>
+    <Table
+        style={{ width: '100%', flex: 1 }}
+        defaultTextStyle={{ fontSize: 14, textAlign: 'center', color: '#333333' }}
+        defaultCellStyle={{
+            border: {
+                left: { width: 1, color: '#E5E5E5' },
+                right: { width: 1, color: '#E5E5E5' },
+                top: { width: 1, color: '#E5E5E5' },
+                bottom: { width: 1, color: '#E5E5E5' },
+            },
+        }}
+        cells={[
+            [
+                { text: '项目', textStyle: { bold: true, color: '#FFFFFF', fontSize: 15 }, cellStyle: { background: { color: '#C8102E' } } },
+                { text: '进化目标', textStyle: { bold: true, color: '#FFFFFF', fontSize: 15 }, cellStyle: { background: { color: '#C8102E' } } },
+                { text: '需要 ground-truth', textStyle: { bold: true, color: '#FFFFFF', fontSize: 15 }, cellStyle: { background: { color: '#C8102E' } } },
+                { text: '长程任务增益', textStyle: { bold: true, color: '#FFFFFF', fontSize: 15 }, cellStyle: { background: { color: '#C8102E' } } },
+                { text: '核心创新', textStyle: { bold: true, color: '#FFFFFF', fontSize: 15 }, cellStyle: { background: { color: '#C8102E' } } },
+            ],
+            [
+                { text: 'RRSI', textStyle: { bold: true, color: '#C8102E' } },
+                'harness 全组件',
+                '是（固定 evolve 集）',
+                { text: '+6.0%', textStyle: { bold: true, color: '#C8102E' } },
+                '正则化搜索轨迹',
+            ],
+            [
+                { text: 'Harness²', textStyle: { bold: true, color: '#C8102E' }, cellStyle: { background: { color: '#F8F8F8' } } },
+                { text: 'harness 全组件', cellStyle: { background: { color: '#F8F8F8' } } },
+                { text: '否（对比式探测）', cellStyle: { background: { color: '#F8F8F8' } } },
+                { text: '+11.5%', textStyle: { bold: true, color: '#C8102E' }, cellStyle: { background: { color: '#F8F8F8' } } },
+                { text: '开放世界 + 双层递归', cellStyle: { background: { color: '#F8F8F8' } } },
+            ],
+            [
+                { text: 'Recuris', textStyle: { bold: true, color: '#C8102E' } },
+                '记忆内容',
+                '是（held-out 验证）',
+                { text: '+32.2%', textStyle: { bold: true, color: '#C8102E' } },
+                '记忆层递归',
+            ],
+            [
+                { text: 'AgentFactory', textStyle: { bold: true, color: '#C8102E' }, cellStyle: { background: { color: '#F8F8F8' } } },
+                { text: '子智能体代码', cellStyle: { background: { color: '#F8F8F8' } } },
+                { text: '是（执行反馈）', cellStyle: { background: { color: '#F8F8F8' } } },
+                { text: '57% 成本降低', textStyle: { bold: true, color: '#C8102E' }, cellStyle: { background: { color: '#F8F8F8' } } },
+                { text: '方案固化为可执行模块', cellStyle: { background: { color: '#F8F8F8' } } },
+            ],
+            [
+                { text: 'EvolveR', textStyle: { bold: true, color: '#C8102E' } },
+                '检索策略 + 原则库',
+                '在线/离线交替',
+                { text: '超 Search-R1', textStyle: { bold: true, color: '#C8102E' } },
+                'RAG 管道自蒸馏',
+            ],
+            [
+                { text: 'ACE', textStyle: { bold: true, color: '#C8102E' }, cellStyle: { background: { color: '#F8F8F8' } } },
+                { text: '上下文管理 + 反思策略', cellStyle: { background: { color: '#F8F8F8' } } },
+                { text: '多角色互验', cellStyle: { background: { color: '#F8F8F8' } } },
+                { text: '+10.6%', textStyle: { bold: true, color: '#C8102E' }, cellStyle: { background: { color: '#F8F8F8' } } },
+                { text: '上下文治理 + 三角色', cellStyle: { background: { color: '#F8F8F8' } } },
+            ],
+            [
+                { text: 'Letta Code', textStyle: { bold: true, color: '#C8102E' } },
+                '持久记忆 + system prompt',
+                'git 门控',
+                { text: '—（工程化）', textStyle: { color: '#999999' } },
+                '记忆优先 + git 可审计',
+            ],
+            [
+                { text: 'ALMA', textStyle: { bold: true, color: '#C8102E' }, cellStyle: { background: { color: '#F8F8F8' } } },
+                { text: '记忆架构设计', cellStyle: { background: { color: '#F8F8F8' } } },
+                { text: '元学习搜索', cellStyle: { background: { color: '#F8F8F8' } } },
+                { text: '+12.8%', textStyle: { bold: true, color: '#C8102E' }, cellStyle: { background: { color: '#F8F8F8' } } },
+                { text: '进化设计而非内容', cellStyle: { background: { color: '#F8F8F8' } } },
+            ],
+            [
+                { text: 'EvoAgentX', textStyle: { bold: true, color: '#C8102E' } },
+                '多维度统一优化',
+                '多评估器',
+                { text: '—（框架级）', textStyle: { color: '#999999' } },
+                '多优化器集成框架',
+            ],
+        ]}
+    />
+    <Box style={{
+        background: '#F8F8F8',
+        borderLeft: '4px solid #C8102E',
+        borderRadius: 4,
+        padding: 12,
+        marginTop: 14,
+    }}>
+        <Text style={{ fontSize: 14, color: '#333333', lineHeight: 1.5 }}>
+            <span style={{ fontWeight: 'bold', color: '#C8102E' }}>趋势</span>：从"全组件搜索"到"记忆层聚焦"到"上下文治理"到"架构元搜索"——<span style={{ fontWeight: 'bold' }}>从搜索固定空间走向搜索搜索空间本身</span>，递归层次不断上移
+        </Text>
+    </Box>
+</Slide>

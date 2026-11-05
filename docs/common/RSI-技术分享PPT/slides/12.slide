@@ -1,0 +1,121 @@
+<Slide style={{
+    width: '1280px',
+    height: '720px',
+    background: '#FFFFFF',
+    padding: '50px 80px',
+    display: 'flex',
+    flexDirection: 'column',
+}}>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
+        marginBottom: 20,
+    }}>
+        <Text style={{ fontSize: 14, color: '#C8102E', fontWeight: 'bold' }}>05 业界进展</Text>
+        <Text style={{ fontSize: 32, color: '#1A1A1A', fontWeight: 'bold' }}>C 类 Harness 递归：关键数据</Text>
+        <Box style={{ width: '100%', height: 2, background: '#C8102E', marginTop: 2 }} />
+    </Box>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'row',
+        gap: 16,
+        flex: 1,
+    }}>
+        <Box style={{
+            flex: 1,
+            border: '1px solid #E5E5E5',
+            borderRadius: 8,
+            padding: 16,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10,
+        }}>
+            <Text style={{ fontSize: 18, color: '#C8102E', fontWeight: 'bold' }}>Recuris</Text>
+            <Text style={{ fontSize: 14, color: '#999999' }}>NUS/Stanford/Oxford</Text>
+            <Text style={{ fontSize: 14, color: '#666666' }}>进化记忆而非进化 prompt</Text>
+            <Box style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+                <Box style={{ display: 'flex', flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
+                    <Text style={{ fontSize: 42, color: '#C8102E', fontWeight: 'bold', lineHeight: 1 }}>32.2</Text>
+                    <Text style={{ fontSize: 18, color: '#666666', fontWeight: 'bold', paddingBottom: 6 }}>%</Text>
+                </Box>
+                <Text style={{ fontSize: 14, color: '#666666' }}>最长任务（≥50 轮）提升</Text>
+                <Text style={{ fontSize: 14, color: '#C8102E', fontWeight: 'bold' }}>长程失败率下降 80%</Text>
+            </Box>
+        </Box>
+        <Box style={{
+            flex: 1,
+            border: '1px solid #E5E5E5',
+            borderRadius: 8,
+            padding: 16,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10,
+        }}>
+            <Text style={{ fontSize: 18, color: '#C8102E', fontWeight: 'bold' }}>AgentFactory</Text>
+            <Text style={{ fontSize: 14, color: '#999999' }}>ACL 2026 System Demos</Text>
+            <Text style={{ fontSize: 14, color: '#666666' }}>方案固化为可执行子智能体</Text>
+            <Box style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+                <Box style={{ display: 'flex', flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
+                    <Text style={{ fontSize: 42, color: '#C8102E', fontWeight: 'bold', lineHeight: 1 }}>57</Text>
+                    <Text style={{ fontSize: 18, color: '#666666', fontWeight: 'bold', paddingBottom: 6 }}>%</Text>
+                </Box>
+                <Text style={{ fontSize: 14, color: '#666666' }}>编排成本下降（Batch 2）</Text>
+                <Text style={{ fontSize: 14, color: '#C8102E', fontWeight: 'bold' }}>子智能体可复用</Text>
+            </Box>
+        </Box>
+        <Box style={{
+            flex: 1,
+            border: '1px solid #E5E5E5',
+            borderRadius: 8,
+            padding: 16,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10,
+        }}>
+            <Text style={{ fontSize: 18, color: '#C8102E', fontWeight: 'bold' }}>ACE</Text>
+            <Text style={{ fontSize: 14, color: '#999999' }}>Stanford/SambaNova/UCB</Text>
+            <Text style={{ fontSize: 14, color: '#666666' }}>上下文治理 + 三角色架构</Text>
+            <Box style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+                <Box style={{ display: 'flex', flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
+                    <Text style={{ fontSize: 42, color: '#C8102E', fontWeight: 'bold', lineHeight: 1 }}>10.6</Text>
+                    <Text style={{ fontSize: 18, color: '#666666', fontWeight: 'bold', paddingBottom: 6 }}>%</Text>
+                </Box>
+                <Text style={{ fontSize: 14, color: '#666666' }}>agent 基准平均提升</Text>
+                <Text style={{ fontSize: 14, color: '#C8102E', fontWeight: 'bold' }}>延迟降低 86.9%</Text>
+            </Box>
+        </Box>
+        <Box style={{
+            flex: 1,
+            border: '1px solid #E5E5E5',
+            borderRadius: 8,
+            padding: 16,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10,
+        }}>
+            <Text style={{ fontSize: 18, color: '#C8102E', fontWeight: 'bold' }}>ALMA</Text>
+            <Text style={{ fontSize: 14, color: '#999999' }}>UBC/Vector Institute</Text>
+            <Text style={{ fontSize: 14, color: '#666666' }}>元学习记忆设计</Text>
+            <Box style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 8 }}>
+                <Box style={{ display: 'flex', flexDirection: 'row', gap: 8, alignItems: 'flex-end' }}>
+                    <Text style={{ fontSize: 42, color: '#C8102E', fontWeight: 'bold', lineHeight: 1 }}>12.8</Text>
+                    <Text style={{ fontSize: 18, color: '#666666', fontWeight: 'bold', paddingBottom: 6 }}>%</Text>
+                </Box>
+                <Text style={{ fontSize: 14, color: '#666666' }}>相比无记忆基线提升</Text>
+                <Text style={{ fontSize: 14, color: '#C8102E', fontWeight: 'bold' }}>分布偏移下保持 84.1%</Text>
+            </Box>
+        </Box>
+    </Box>
+    <Box style={{
+        background: '#F8F8F8',
+        borderLeft: '4px solid #C8102E',
+        borderRadius: 4,
+        padding: 14,
+        marginTop: 16,
+    }}>
+        <Text style={{ fontSize: 16, color: '#333333', lineHeight: 1.5 }}>
+            <span style={{ fontWeight: 'bold', color: '#C8102E' }}>C 类技术趋势</span>：从"全组件搜索"到"记忆层聚焦"到"上下文治理"到"架构元搜索"——演进方向是<span style={{ fontWeight: 'bold' }}>从搜索固定空间走向搜索搜索空间本身</span>，递归的层次不断上移
+        </Text>
+    </Box>
+</Slide>

@@ -1,0 +1,123 @@
+<Slide style={{
+    width: '1280px',
+    height: '720px',
+    background: '#FFFFFF',
+    padding: '50px 80px',
+    display: 'flex',
+    flexDirection: 'column',
+}}>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
+        marginBottom: 24,
+    }}>
+        <Text style={{ fontSize: 14, color: '#C8102E', fontWeight: 'bold' }}>04 安全风险</Text>
+        <Text style={{ fontSize: 32, color: '#1A1A1A', fontWeight: 'bold' }}>安全风险图谱：远期</Text>
+        <Box style={{ width: '100%', height: 2, background: '#C8102E', marginTop: 2 }} />
+    </Box>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 24,
+        flex: 1,
+    }}>
+        <Box style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 24,
+        }}>
+            <Box style={{
+                width: 64, height: 64,
+                borderRadius: 32,
+                background: '#F8F8F8',
+                border: '2px solid #C8102E',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+            }}>
+                <Text style={{ fontSize: 24, color: '#C8102E', fontWeight: 'bold' }}>5</Text>
+            </Box>
+            <Box style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+            }}>
+                <Text style={{ fontSize: 22, color: '#1A1A1A', fontWeight: 'bold' }}>
+                    自改进循环监控
+                </Text>
+                <Text style={{ fontSize: 16, color: '#333333', lineHeight: 1.6 }}>
+                    传统工程监控不足以覆盖循环特有风险：<span style={{ fontWeight: 'bold', color: '#C8102E' }}>实际增益与评估器报告增益的差距</span>、改进是否集中在预期维度、循环是否在收敛还是振荡、改进在分布外是否保持
+                </Text>
+                <Text style={{ fontSize: 16, color: '#666666', lineHeight: 1.5 }}>
+                    传统监控针对"代码是否正确运行"，自改进循环引入了新的监控对象——"改进过程本身是否健康"
+                </Text>
+            </Box>
+        </Box>
+        <Box style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 24,
+        }}>
+            <Box style={{
+                width: 64, height: 64,
+                borderRadius: 32,
+                background: '#C8102E',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+            }}>
+                <Text style={{ fontSize: 24, color: '#FFFFFF', fontWeight: 'bold' }}>6</Text>
+            </Box>
+            <Box style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+            }}>
+                <Text style={{ fontSize: 22, color: '#1A1A1A', fontWeight: 'bold' }}>
+                    智能爆炸阈值
+                </Text>
+                <Text style={{ fontSize: 16, color: '#333333', lineHeight: 1.6 }}>
+                    完全自主 RSI 如果发生，改进可能在极短时间内跨越<span style={{ fontWeight: 'bold', color: '#C8102E' }}>失控阈值</span>。物理和信息论极限定义了"服务包络"上限，资本投入与计算/数据/能源的耦合定义了区分超线性增长（失控）与次临界行为（收敛）的临界边界
+                </Text>
+                <Text style={{ fontSize: 16, color: '#666666', lineHeight: 1.5 }}>
+                    目前尚无证据表明已接近，但框架的存在说明这个风险是可分析、可监测的
+                </Text>
+            </Box>
+        </Box>
+        <Box style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 24,
+        }}>
+            <Box style={{
+                width: 64, height: 64,
+                borderRadius: 32,
+                background: '#C8102E',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+            }}>
+                <Text style={{ fontSize: 24, color: '#FFFFFF', fontWeight: 'bold' }}>7</Text>
+            </Box>
+            <Box style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+            }}>
+                <Text style={{ fontSize: 22, color: '#1A1A1A', fontWeight: 'bold' }}>
+                    失控边界
+                </Text>
+                <Text style={{ fontSize: 16, color: '#333333', lineHeight: 1.6 }}>
+                    如果 RSI 从"受监督"滑向"完全自主"，人类可能失去<span style={{ fontWeight: 'bold', color: '#C8102E' }}>有意义干预的机会</span>。25 位前沿研究员中 20 位将 AI 研究自动化列为最紧迫风险
+                </Text>
+                <Text style={{ fontSize: 16, color: '#666666', lineHeight: 1.5 }}>
+                    每一步自动化都提高了效率，降低了人类参与的成本收益比——当人类参与的成本高于收益时，自主化就是"理性选择"
+                </Text>
+            </Box>
+        </Box>
+    </Box>
+</Slide>

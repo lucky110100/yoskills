@@ -1,0 +1,194 @@
+<Slide style={{
+    width: '1280px',
+    height: '720px',
+    background: '#FFFFFF',
+    padding: '50px 80px',
+    display: 'flex',
+    flexDirection: 'column',
+}}>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
+        marginBottom: 16,
+    }}>
+        <Text style={{ fontSize: 14, color: '#C8102E', fontWeight: 'bold' }}>06 本地实践</Text>
+        <Text style={{ fontSize: 30, color: '#1A1A1A', fontWeight: 'bold' }}>完整示例：CSV 日期消歧优化（下）</Text>
+        <Box style={{ width: '100%', height: 2, background: '#C8102E', marginTop: 2 }} />
+    </Box>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'row',
+        gap: 20,
+        flex: 1,
+    }}>
+        <Box style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 14,
+        }}>
+            <Box style={{
+                border: '1px solid #E5E5E5',
+                borderRadius: 8,
+                padding: 14,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+            }}>
+                <Box style={{ display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                    <Box style={{ width: 24, height: 24, borderRadius: 4, background: '#C8102E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Text style={{ fontSize: 12, color: '#FFFFFF', fontWeight: 'bold' }}>6</Text>
+                    </Box>
+                    <Text style={{ fontSize: 15, color: '#C8102E', fontWeight: 'bold' }}>门禁 A：目标 batch（只跑 c1）</Text>
+                </Box>
+                <Box style={{ display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                    <Text style={{ fontSize: 16, color: '#666666' }}>c1: 0.40</Text>
+                    <Text style={{ fontSize: 18, color: '#C8102E', fontWeight: 'bold' }}>→ 0.70</Text>
+                </Box>
+                <Box style={{ background: '#F0FDF4', borderRadius: 6, padding: 10 }}>
+                    <Text style={{ fontSize: 14, color: '#16A34A', fontWeight: 'bold' }}>
+                        0.70 - 0.40 = 0.30 大于 0.05 + epsilon  →  targets_improved = True
+                    </Text>
+                </Box>
+                <Text style={{ fontSize: 12, color: '#999999' }}>写入 improvement_proof（含 sha256 指纹）</Text>
+            </Box>
+            <Box style={{
+                border: '1px solid #E5E5E5',
+                borderRadius: 8,
+                padding: 14,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 10,
+                flex: 1,
+            }}>
+                <Box style={{ display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                    <Box style={{ width: 24, height: 24, borderRadius: 4, background: '#C8102E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Text style={{ fontSize: 12, color: '#FFFFFF', fontWeight: 'bold' }}>7</Text>
+                    </Box>
+                    <Text style={{ fontSize: 15, color: '#C8102E', fontWeight: 'bold' }}>门禁 B：全量重放（5 case 全跑）</Text>
+                </Box>
+                <Box style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <Box style={{ display: 'flex', flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
+                        <Box style={{ background: '#F8F8F8', borderRadius: 4, padding: '3px 8px' }}>
+                            <Text style={{ fontSize: 12, color: '#C8102E', fontWeight: 'bold' }}>c1: 0.70</Text>
+                        </Box>
+                        <Box style={{ background: '#F8F8F8', borderRadius: 4, padding: '3px 8px' }}>
+                            <Text style={{ fontSize: 12, color: '#666666' }}>c2: 0.85</Text>
+                        </Box>
+                        <Box style={{ background: '#F8F8F8', borderRadius: 4, padding: '3px 8px' }}>
+                            <Text style={{ fontSize: 12, color: '#666666' }}>c3: 0.90</Text>
+                        </Box>
+                        <Box style={{ background: '#F8F8F8', borderRadius: 4, padding: '3px 8px' }}>
+                            <Text style={{ fontSize: 12, color: '#666666' }}>c4: 0.72</Text>
+                        </Box>
+                        <Box style={{ background: '#F8F8F8', borderRadius: 4, padding: '3px 8px' }}>
+                            <Text style={{ fontSize: 12, color: '#666666' }}>c5: 0.60</Text>
+                        </Box>
+                    </Box>
+                    <Text style={{ fontSize: 14, color: '#333333', fontWeight: 'bold' }}>mean = 0.754（baseline 0.70）</Text>
+                </Box>
+                <Box style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    <Box style={{ display: 'flex', flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                        <Text style={{ fontSize: 14, color: '#16A34A', fontWeight: 'bold' }}>✓</Text>
+                        <Text style={{ fontSize: 13, color: '#333333' }}>目标全提分：c1 +0.30</Text>
+                    </Box>
+                    <Box style={{ display: 'flex', flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                        <Text style={{ fontSize: 14, color: '#16A34A', fontWeight: 'bold' }}>✓</Text>
+                        <Text style={{ fontSize: 13, color: '#333333' }}>非目标退分：c4 −0.03 ≤ 0.05</Text>
+                    </Box>
+                    <Box style={{ display: 'flex', flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                        <Text style={{ fontSize: 14, color: '#16A34A', fontWeight: 'bold' }}>✓</Text>
+                        <Text style={{ fontSize: 13, color: '#333333' }}>全量均分提高：0.754 大于 0.70</Text>
+                    </Box>
+                </Box>
+                <Box style={{ background: '#F0FDF4', borderRadius: 6, padding: 10 }}>
+                    <Text style={{ fontSize: 14, color: '#16A34A', fontWeight: 'bold' }}>
+                        accepted = true
+                    </Text>
+                    <Text style={{ fontSize: 12, color: '#16A34A' }}>
+                        reason: two_stage_improvement_confirmed
+                    </Text>
+                </Box>
+            </Box>
+        </Box>
+        <Box style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 14,
+        }}>
+            <Box style={{
+                border: '1px solid #E5E5E5',
+                borderRadius: 8,
+                padding: 14,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+            }}>
+                <Box style={{ display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                    <Box style={{ width: 24, height: 24, borderRadius: 4, background: '#C8102E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Text style={{ fontSize: 12, color: '#FFFFFF', fontWeight: 'bold' }}>8</Text>
+                    </Box>
+                    <Text style={{ fontSize: 15, color: '#C8102E', fontWeight: 'bold' }}>晋升</Text>
+                </Box>
+                <Box style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <Text style={{ fontSize: 13, color: '#333333', lineHeight: 1.5 }}>
+                        <span style={{ fontWeight: 'bold' }}>best_harness_refs_path</span> 指向新包
+                    </Text>
+                    <Text style={{ fontSize: 13, color: '#333333', lineHeight: 1.5 }}>
+                        <span style={{ fontWeight: 'bold' }}>optimization_journal</span> 追加：lever=instruction, delta=+0.30, accepted
+                    </Text>
+                    <Text style={{ fontSize: 13, color: '#333333', lineHeight: 1.5 }}>
+                        <span style={{ fontWeight: 'bold' }}>lever_scoreboard</span> 更新 instruction 成功计数
+                    </Text>
+                </Box>
+                <Text style={{ fontSize: 12, color: '#999999' }}>
+                    下一 epoch 规划器可见"instruction 类改动在此场景有效"
+                </Text>
+                <Text style={{ fontSize: 12, color: '#C8102E', fontWeight: 'bold' }}>
+                    rsi.harness.rollback 可一键回退
+                </Text>
+            </Box>
+            <Box style={{
+                background: '#FEF2F2',
+                border: '1px solid #FECACA',
+                borderRadius: 8,
+                padding: 14,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+                flex: 1,
+            }}>
+                <Text style={{ fontSize: 15, color: '#DC2626', fontWeight: 'bold' }}>反例对照（实跑验证）</Text>
+                <Text style={{ fontSize: 13, color: '#333333', lineHeight: 1.5 }}>
+                    将 c4 改为 0.68（退分 0.07 大于 0.05 阈值）
+                </Text>
+                <Box style={{ background: '#FFFFFF', borderRadius: 4, padding: 10 }}>
+                    <Text style={{ fontSize: 13, color: '#DC2626', fontWeight: 'bold' }}>
+                        accepted = false
+                    </Text>
+                    <Text style={{ fontSize: 12, color: '#DC2626' }}>
+                        reason: non_target_case_regressed
+                    </Text>
+                </Box>
+                <Text style={{ fontSize: 13, color: '#333333', lineHeight: 1.5, fontWeight: 'bold' }}>
+                    两阶段门禁的实际拦截能力：
+                </Text>
+                <Text style={{ fontSize: 13, color: '#666666', lineHeight: 1.5 }}>
+                    防止为提升单个 case 而牺牲其他 case
+                </Text>
+            </Box>
+            <Box style={{
+                background: '#F8F8F8',
+                borderLeft: '4px solid #C8102E',
+                borderRadius: 4,
+                padding: 12,
+            }}>
+                <Text style={{ fontSize: 13, color: '#333333', lineHeight: 1.5 }}>
+                    <span style={{ fontWeight: 'bold', color: '#C8102E' }}>防篡改</span>：全量评测前后各校验 package_fingerprint()，不一致则抛 EvaluationInfrastructureError
+                </Text>
+            </Box>
+        </Box>
+    </Box>
+</Slide>

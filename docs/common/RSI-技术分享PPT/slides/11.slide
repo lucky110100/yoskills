@@ -1,0 +1,233 @@
+<Slide style={{
+    width: '1280px',
+    height: '720px',
+    background: '#FFFFFF',
+    padding: '50px 80px',
+    display: 'flex',
+    flexDirection: 'column',
+}}>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
+        marginBottom: 20,
+    }}>
+        <Text style={{ fontSize: 14, color: '#C8102E', fontWeight: 'bold' }}>05 业界进展</Text>
+        <Text style={{ fontSize: 32, color: '#1A1A1A', fontWeight: 'bold' }}>标杆项目分类图谱</Text>
+        <Box style={{ width: '100%', height: 2, background: '#C8102E', marginTop: 2 }} />
+    </Box>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 12,
+        flex: 1,
+    }}>
+        <Box style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 12,
+            alignItems: 'center',
+        }}>
+            <Box style={{
+                width: 48, height: 48,
+                borderRadius: 8,
+                background: '#C8102E',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+            }}>
+                <Text style={{ fontSize: 20, color: '#FFFFFF', fontWeight: 'bold' }}>A</Text>
+            </Box>
+            <Box style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+            }}>
+                <Text style={{ fontSize: 18, color: '#1A1A1A', fontWeight: 'bold' }}>
+                    进化搜索 · 候选代码/算法
+                </Text>
+                <Text style={{ fontSize: 15, color: '#666666' }}>
+                    LLM 变异 + 评估器筛选 + 种群保留
+                </Text>
+            </Box>
+            <Box style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+            }}>
+                <Text style={{ fontSize: 15, color: '#C8102E', fontWeight: 'bold' }}>
+                    AlphaEvolve · OpenEvolve · FunSearch · ShinkaEvolve
+                </Text>
+            </Box>
+        </Box>
+        <Box style={{ width: '100%', height: 1, background: '#F0F0F0' }} />
+        <Box style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 12,
+            alignItems: 'center',
+        }}>
+            <Box style={{
+                width: 48, height: 48,
+                borderRadius: 8,
+                background: '#C8102E',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+            }}>
+                <Text style={{ fontSize: 20, color: '#FFFFFF', fontWeight: 'bold' }}>B</Text>
+            </Box>
+            <Box style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+            }}>
+                <Text style={{ fontSize: 18, color: '#1A1A1A', fontWeight: 'bold' }}>
+                    自我修改代码 · Agent 自身代码库
+                </Text>
+                <Text style={{ fontSize: 15, color: '#666666' }}>
+                    Agent 编辑自身 harness 代码 + 基准验证 + 归档保留
+                </Text>
+            </Box>
+            <Box style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+            }}>
+                <Text style={{ fontSize: 15, color: '#C8102E', fontWeight: 'bold' }}>
+                    DGM · ADAS · HyperAgents · SICA
+                </Text>
+            </Box>
+        </Box>
+        <Box style={{ width: '100%', height: 1, background: '#F0F0F0' }} />
+        <Box style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 12,
+            alignItems: 'center',
+            background: '#FFF5F5',
+            borderRadius: 8,
+            padding: 12,
+        }}>
+            <Box style={{
+                width: 48, height: 48,
+                borderRadius: 8,
+                background: '#C8102E',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+            }}>
+                <Text style={{ fontSize: 20, color: '#FFFFFF', fontWeight: 'bold' }}>C</Text>
+            </Box>
+            <Box style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+            }}>
+                <Text style={{ fontSize: 18, color: '#1A1A1A', fontWeight: 'bold' }}>
+                    Harness 递归改进 · 模型外围系统
+                </Text>
+                <Text style={{ fontSize: 15, color: '#666666' }}>
+                    固定权重 + 多层正则化搜索或对比式精炼
+                </Text>
+            </Box>
+            <Box style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+            }}>
+                <Text style={{ fontSize: 15, color: '#C8102E', fontWeight: 'bold' }}>
+                    RRSI · Harness² · Recuris · AgentFactory · ACE · ALMA
+                </Text>
+            </Box>
+        </Box>
+        <Box style={{ width: '100%', height: 1, background: '#F0F0F0' }} />
+        <Box style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 12,
+            alignItems: 'center',
+        }}>
+            <Box style={{
+                width: 48, height: 48,
+                borderRadius: 8,
+                background: '#C8102E',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+            }}>
+                <Text style={{ fontSize: 20, color: '#FFFFFF', fontWeight: 'bold' }}>D</Text>
+            </Box>
+            <Box style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+            }}>
+                <Text style={{ fontSize: 18, color: '#1A1A1A', fontWeight: 'bold' }}>
+                    权重 + Harness 双循环
+                </Text>
+                <Text style={{ fontSize: 15, color: '#666666' }}>
+                    同时改 harness 和模型权重 · Feedback-Agent 决定每轮改哪个杠杆
+                </Text>
+            </Box>
+            <Box style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+            }}>
+                <Text style={{ fontSize: 15, color: '#C8102E', fontWeight: 'bold' }}>
+                    SIA · MASS
+                </Text>
+            </Box>
+        </Box>
+        <Box style={{ width: '100%', height: 1, background: '#F0F0F0' }} />
+        <Box style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 12,
+            alignItems: 'center',
+        }}>
+            <Box style={{
+                width: 48, height: 48,
+                borderRadius: 8,
+                background: '#C8102E',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+            }}>
+                <Text style={{ fontSize: 20, color: '#FFFFFF', fontWeight: 'bold' }}>E</Text>
+            </Box>
+            <Box style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+            }}>
+                <Text style={{ fontSize: 18, color: '#1A1A1A', fontWeight: 'bold' }}>
+                    自动化 AI 研发 · AI 研发管线本身
+                </Text>
+                <Text style={{ fontSize: 15, color: '#666666' }}>
+                    AI 执行"想法→实验→论文"全流程
+                </Text>
+            </Box>
+            <Box style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+            }}>
+                <Text style={{ fontSize: 15, color: '#C8102E', fontWeight: 'bold' }}>
+                    AI Scientist · ALE-Agent · autoresearch
+                </Text>
+            </Box>
+        </Box>
+    </Box>
+</Slide>

@@ -1,0 +1,121 @@
+<Slide style={{
+    width: '1280px',
+    height: '720px',
+    background: '#FFFFFF',
+    padding: '60px 80px',
+    display: 'flex',
+    flexDirection: 'column',
+}}>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 6,
+        marginBottom: 32,
+    }}>
+        <Text style={{ fontSize: 14, color: '#C8102E', fontWeight: 'bold' }}>02 正在发生什么</Text>
+        <Text style={{ fontSize: 36, color: '#1A1A1A', fontWeight: 'bold' }}>2025–2026 关键事件速览</Text>
+        <Box style={{ width: '100%', height: 2, background: '#C8102E', marginTop: 4 }} />
+    </Box>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 16,
+        flex: 1,
+    }}>
+        <Box style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 0,
+            alignItems: 'stretch',
+        }}>
+            <Box style={{ width: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 18, color: '#C8102E', fontWeight: 'bold' }}>2025.5</Text>
+            </Box>
+            <Box style={{ width: 3, background: '#F0F0F0', margin: '4px 20px' }} />
+            <Box style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <Text style={{ fontSize: 18, color: '#1A1A1A', fontWeight: 'bold' }}>Google DeepMind AlphaEvolve</Text>
+                <Text style={{ fontSize: 16, color: '#666666', lineHeight: 1.5 }}>
+                    恢复全球 0.7% 计算资源 · 加速 Gemini 训练 1% · FlashAttention 内核 +32.5% · 打破 Strassen 4×4 复矩阵 56 年记录
+                </Text>
+            </Box>
+            <Box style={{ width: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 16 }}>🟢</Text>
+            </Box>
+        </Box>
+        <Box style={{ display: 'flex', flexDirection: 'row', gap: 0, alignItems: 'stretch' }}>
+            <Box style={{ width: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 18, color: '#C8102E', fontWeight: 'bold' }}>2025</Text>
+            </Box>
+            <Box style={{ width: 3, background: '#F0F0F0', margin: '4px 20px' }} />
+            <Box style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <Text style={{ fontSize: 18, color: '#1A1A1A', fontWeight: 'bold' }}>Darwin Gödel Machine（DGM）</Text>
+                <Text style={{ fontSize: 16, color: '#666666', lineHeight: 1.5 }}>
+                    SWE-bench 20%→50% · Polyglot 14.2%→30.7% · 80 轮迭代 $22,000
+                </Text>
+            </Box>
+            <Box style={{ width: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 16 }}>🟢</Text>
+            </Box>
+        </Box>
+        <Box style={{ display: 'flex', flexDirection: 'row', gap: 0, alignItems: 'stretch' }}>
+            <Box style={{ width: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 18, color: '#C8102E', fontWeight: 'bold' }}>2026.2</Text>
+            </Box>
+            <Box style={{ width: 3, background: '#F0F0F0', margin: '4px 20px' }} />
+            <Box style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <Text style={{ fontSize: 18, color: '#1A1A1A', fontWeight: 'bold' }}>OpenAI GPT-5.3-Codex</Text>
+                <Text style={{ fontSize: 16, color: '#666666', lineHeight: 1.5 }}>
+                    首个"在创建自身过程中起作用"的模型
+                </Text>
+            </Box>
+            <Box style={{ width: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 16 }}>🟢</Text>
+            </Box>
+        </Box>
+        <Box style={{ display: 'flex', flexDirection: 'row', gap: 0, alignItems: 'stretch' }}>
+            <Box style={{ width: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 18, color: '#C8102E', fontWeight: 'bold' }}>2026.5</Text>
+            </Box>
+            <Box style={{ width: 3, background: '#F0F0F0', margin: '4px 20px' }} />
+            <Box style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <Text style={{ fontSize: 18, color: '#1A1A1A', fontWeight: 'bold' }}>Anthropic "When AI Builds Itself"</Text>
+                <Text style={{ fontSize: 16, color: '#666666', lineHeight: 1.5 }}>
+                    见下页详述——迄今最具冲击力的数据
+                </Text>
+            </Box>
+            <Box style={{ width: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 16 }}>🟢</Text>
+            </Box>
+        </Box>
+        <Box style={{ display: 'flex', flexDirection: 'row', gap: 0, alignItems: 'stretch' }}>
+            <Box style={{ width: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 18, color: '#C8102E', fontWeight: 'bold' }}>2026</Text>
+            </Box>
+            <Box style={{ width: 3, background: '#F0F0F0', margin: '4px 20px' }} />
+            <Box style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <Text style={{ fontSize: 18, color: '#1A1A1A', fontWeight: 'bold' }}>ICLR 2026 RSI Workshop</Text>
+                <Text style={{ fontSize: 16, color: '#666666', lineHeight: 1.5 }}>
+                    学术界正式承认："RSI 已从思想实验转向部署系统"
+                </Text>
+            </Box>
+            <Box style={{ width: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 16 }}>🟢</Text>
+            </Box>
+        </Box>
+        <Box style={{ display: 'flex', flexDirection: 'row', gap: 0, alignItems: 'stretch' }}>
+            <Box style={{ width: 100, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 18, color: '#C8102E', fontWeight: 'bold' }}>2026</Text>
+            </Box>
+            <Box style={{ width: 3, background: '#F0F0F0', margin: '4px 20px' }} />
+            <Box style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                <Text style={{ fontSize: 18, color: '#1A1A1A', fontWeight: 'bold' }}>研究者调查（Severin Field）</Text>
+                <Text style={{ fontSize: 16, color: '#666666', lineHeight: 1.5 }}>
+                    25 位研究员中 20 人将 AI 研究自动化列为最紧迫风险 · 提出"激励翻转"概念
+                </Text>
+            </Box>
+            <Box style={{ width: 30, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 16 }}>🟡</Text>
+            </Box>
+        </Box>
+    </Box>
+</Slide>

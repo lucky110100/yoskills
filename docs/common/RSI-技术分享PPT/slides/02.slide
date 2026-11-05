@@ -1,0 +1,85 @@
+<Slide style={{
+    width: '1280px',
+    height: '720px',
+    background: '#FFFFFF',
+    padding: '60px 80px',
+    display: 'flex',
+    flexDirection: 'column',
+}}>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+        marginBottom: 40,
+    }}>
+        <Text style={{
+            fontSize: 14,
+            color: '#C8102E',
+            fontWeight: 'bold',
+            letterSpacing: '2px',
+        }}>
+            CONTENTS
+        </Text>
+        <Text style={{
+            fontSize: 40,
+            color: '#1A1A1A',
+            fontWeight: 'bold',
+        }}>
+            目录
+        </Text>
+        <Box style={{
+            width: 60,
+            height: 3,
+            background: '#C8102E',
+            borderRadius: 2,
+            marginTop: 4,
+        }} />
+    </Box>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 22,
+    }}>
+        <Box style={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 24,
+        }}>
+            <Text style={{ fontSize: 28, color: '#C8102E', fontWeight: 'bold', width: 48 }}>01</Text>
+            <Box style={{ width: 1, height: 28, background: '#E5E5E5' }} />
+            <Text style={{ fontSize: 22, color: '#333333', fontWeight: 'bold', flex: 1 }}>RSI 是什么：定义与误称澄清</Text>
+            <Text style={{ fontSize: 16, color: '#999999' }}>P03</Text>
+        </Box>
+        <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 24 }}>
+            <Text style={{ fontSize: 28, color: '#C8102E', fontWeight: 'bold', width: 48 }}>02</Text>
+            <Box style={{ width: 1, height: 28, background: '#E5E5E5' }} />
+            <Text style={{ fontSize: 22, color: '#333333', fontWeight: 'bold', flex: 1 }}>正在发生什么：关键事件与公开披露</Text>
+            <Text style={{ fontSize: 16, color: '#999999' }}>P04</Text>
+        </Box>
+        <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 24 }}>
+            <Text style={{ fontSize: 28, color: '#C8102E', fontWeight: 'bold', width: 48 }}>03</Text>
+            <Box style={{ width: 1, height: 28, background: '#E5E5E5' }} />
+            <Text style={{ fontSize: 22, color: '#333333', fontWeight: 'bold', flex: 1 }}>技术机制简述：自改进循环原理</Text>
+            <Text style={{ fontSize: 16, color: '#999999' }}>P06</Text>
+        </Box>
+        <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 24 }}>
+            <Text style={{ fontSize: 28, color: '#C8102E', fontWeight: 'bold', width: 48 }}>04</Text>
+            <Box style={{ width: 1, height: 28, background: '#E5E5E5' }} />
+            <Text style={{ fontSize: 22, color: '#333333', fontWeight: 'bold', flex: 1 }}>安全风险图谱</Text>
+            <Text style={{ fontSize: 16, color: '#999999' }}>P10</Text>
+        </Box>
+        <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 24 }}>
+            <Text style={{ fontSize: 28, color: '#C8102E', fontWeight: 'bold', width: 48 }}>05</Text>
+            <Box style={{ width: 1, height: 28, background: '#E5E5E5' }} />
+            <Text style={{ fontSize: 22, color: '#333333', fontWeight: 'bold', flex: 1 }}>业界当前进展：标杆项目剖析</Text>
+            <Text style={{ fontSize: 16, color: '#999999' }}>P12-P14</Text>
+        </Box>
+        <Box style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 24 }}>
+            <Text style={{ fontSize: 28, color: '#C8102E', fontWeight: 'bold', width: 48 }}>06</Text>
+            <Box style={{ width: 1, height: 28, background: '#E5E5E5' }} />
+            <Text style={{ fontSize: 22, color: '#333333', fontWeight: 'bold', flex: 1 }}>本地实践：jiuwenswarm RSI 归类分析</Text>
+            <Text style={{ fontSize: 16, color: '#999999' }}>P15-P18</Text>
+        </Box>
+    </Box>
+</Slide>

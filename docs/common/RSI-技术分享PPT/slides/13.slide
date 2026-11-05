@@ -1,0 +1,146 @@
+<Slide style={{
+    width: '1280px',
+    height: '720px',
+    background: '#FFFFFF',
+    padding: '50px 80px',
+    display: 'flex',
+    flexDirection: 'column',
+}}>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
+        marginBottom: 24,
+    }}>
+        <Text style={{ fontSize: 14, color: '#C8102E', fontWeight: 'bold' }}>总结</Text>
+        <Text style={{ fontSize: 32, color: '#1A1A1A', fontWeight: 'bold' }}>工程启示</Text>
+        <Box style={{ width: '100%', height: 2, background: '#C8102E', marginTop: 2 }} />
+    </Box>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 20,
+        flex: 1,
+    }}>
+        <Box style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 20,
+        }}>
+            <Box style={{
+                width: 48, height: 48,
+                borderRadius: 8,
+                background: '#C8102E',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+            }}>
+                <Text style={{ fontSize: 20, color: '#FFFFFF', fontWeight: 'bold' }}>1</Text>
+            </Box>
+            <Box style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+            }}>
+                <Text style={{ fontSize: 20, color: '#1A1A1A', fontWeight: 'bold' }}>
+                    RSI-adjacent 已是生产现实，不是科幻
+                </Text>
+                <Text style={{ fontSize: 16, color: '#666666', lineHeight: 1.6 }}>
+                    AI 在人类监督下实质参与后继系统开发——代码生成占比 15 个月翻 8 倍，Task Horizon 每 4-6 个月翻倍。支撑这些循环的基础设施构成了新的攻击面。
+                </Text>
+            </Box>
+        </Box>
+        <Box style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 20,
+        }}>
+            <Box style={{
+                width: 48, height: 48,
+                borderRadius: 8,
+                background: '#C8102E',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+            }}>
+                <Text style={{ fontSize: 20, color: '#FFFFFF', fontWeight: 'bold' }}>2</Text>
+            </Box>
+            <Box style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+            }}>
+                <Text style={{ fontSize: 20, color: '#1A1A1A', fontWeight: 'bold' }}>
+                    评估器是承重墙，也是攻击面
+                </Text>
+                <Text style={{ fontSize: 16, color: '#666666', lineHeight: 1.6 }}>
+                    Goodhart 定律在每一代自改进中都适用。没有完美的 ground-truth——只有与其局限性相匹配的对抗机制。选择评估范式取决于任务是否有可自动判定的成功标准。
+                </Text>
+            </Box>
+        </Box>
+        <Box style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 20,
+        }}>
+            <Box style={{
+                width: 48, height: 48,
+                borderRadius: 8,
+                background: '#C8102E',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+            }}>
+                <Text style={{ fontSize: 20, color: '#FFFFFF', fontWeight: 'bold' }}>3</Text>
+            </Box>
+            <Box style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+            }}>
+                <Text style={{ fontSize: 20, color: '#1A1A1A', fontWeight: 'bold' }}>
+                    Harness 递归改进是当前最可工程化的路径
+                </Text>
+                <Text style={{ fontSize: 16, color: '#666666', lineHeight: 1.6 }}>
+                    第三代范式（RRSI/Harness²）固定权重、改进外围 harness，改动可见、可回滚、可审计。C 类项目从"全组件搜索"演进到"搜索搜索空间本身"，递归层次不断上移。
+                </Text>
+            </Box>
+        </Box>
+        <Box style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 20,
+        }}>
+            <Box style={{
+                width: 48, height: 48,
+                borderRadius: 8,
+                background: '#C8102E',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+            }}>
+                <Text style={{ fontSize: 20, color: '#FFFFFF', fontWeight: 'bold' }}>4</Text>
+            </Box>
+            <Box style={{
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+            }}>
+                <Text style={{ fontSize: 20, color: '#1A1A1A', fontWeight: 'bold' }}>
+                    安全监控需要新对象：改进过程本身
+                </Text>
+                <Text style={{ fontSize: 16, color: '#666666', lineHeight: 1.6 }}>
+                    传统工程监控针对"代码是否正确运行"，自改进循环引入了"改进过程是否健康"这一新监控维度。供应链、训练链路、评估器、对齐漂移都需要专门的治理机制。
+                </Text>
+            </Box>
+        </Box>
+    </Box>
+</Slide>

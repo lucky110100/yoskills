@@ -1,0 +1,176 @@
+<Slide style={{
+    width: '1280px',
+    height: '720px',
+    background: '#FFFFFF',
+    padding: '50px 80px',
+    display: 'flex',
+    flexDirection: 'column',
+}}>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
+        marginBottom: 20,
+    }}>
+        <Text style={{ fontSize: 14, color: '#C8102E', fontWeight: 'bold' }}>04 安全风险</Text>
+        <Text style={{ fontSize: 32, color: '#1A1A1A', fontWeight: 'bold' }}>安全风险图谱：近期</Text>
+        <Box style={{ width: '100%', height: 2, background: '#C8102E', marginTop: 2 }} />
+    </Box>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 16,
+        flex: 1,
+    }}>
+        <Box style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 16,
+        }}>
+            <Box style={{
+                width: 140,
+                background: '#C8102E',
+                borderRadius: 8,
+                padding: 16,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+                justifyContent: 'center',
+            }}>
+                <Text style={{ fontSize: 14, color: '#FFD0D0', fontWeight: 'bold' }}>RISK 1</Text>
+                <Text style={{ fontSize: 18, color: '#FFFFFF', fontWeight: 'bold', lineHeight: 1.3 }}>
+                    AI 代码<br />供应链风险
+                </Text>
+            </Box>
+            <Box style={{
+                flex: 1,
+                border: '1px solid #E5E5E5',
+                borderRadius: 8,
+                padding: 16,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+            }}>
+                <Text style={{ fontSize: 16, color: '#333333', lineHeight: 1.5 }}>
+                    AI Agent 成为代码供应链中的新参与者，可能被<span style={{ fontWeight: 'bold', color: '#C8102E' }}>提示注入</span>攻陷引入后门，可能不加质疑引入投毒的第三方依赖
+                </Text>
+                <Text style={{ fontSize: 14, color: '#666666', lineHeight: 1.5 }}>
+                    传统供应链安全围绕"人写代码、人审代码"设计，没有为这个新参与者建立信任验证机制。AI Agent 的"判断"不可审计到与人类同等的粒度
+                </Text>
+            </Box>
+        </Box>
+        <Box style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 16,
+        }}>
+            <Box style={{
+                width: 140,
+                background: '#C8102E',
+                borderRadius: 8,
+                padding: 16,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+                justifyContent: 'center',
+            }}>
+                <Text style={{ fontSize: 14, color: '#FFD0D0', fontWeight: 'bold' }}>RISK 2</Text>
+                <Text style={{ fontSize: 18, color: '#FFFFFF', fontWeight: 'bold', lineHeight: 1.3 }}>
+                    训练链路<br />完整性
+                </Text>
+            </Box>
+            <Box style={{
+                flex: 1,
+                border: '1px solid #E5E5E5',
+                borderRadius: 8,
+                padding: 16,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+            }}>
+                <Text style={{ fontSize: 16, color: '#333333', lineHeight: 1.5 }}>
+                    攻击者污染训练数据或篡改评估指标后，污染在递归循环中被<span style={{ fontWeight: 'bold', color: '#C8102E' }}>放大</span>——每一代后继模型都继承被污染的前代
+                </Text>
+                <Text style={{ fontSize: 14, color: '#666666', lineHeight: 1.5 }}>
+                    GPT-5.3-Codex 调试自身训练过程时，训练管线从"人类完全掌控"变为"AI 在环中参与"。单点污染不再是单点问题——它在每一代中被复制、放大、传播
+                </Text>
+            </Box>
+        </Box>
+        <Box style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 16,
+        }}>
+            <Box style={{
+                width: 140,
+                background: '#F8F8F8',
+                border: '2px solid #C8102E',
+                borderRadius: 8,
+                padding: 16,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+                justifyContent: 'center',
+            }}>
+                <Text style={{ fontSize: 14, color: '#C8102E', fontWeight: 'bold' }}>RISK 3</Text>
+                <Text style={{ fontSize: 18, color: '#1A1A1A', fontWeight: 'bold', lineHeight: 1.3 }}>
+                    评估器<br />致盲
+                </Text>
+            </Box>
+            <Box style={{
+                flex: 1,
+                border: '1px solid #E5E5E5',
+                borderRadius: 8,
+                padding: 16,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+            }}>
+                <Text style={{ fontSize: 16, color: '#333333', lineHeight: 1.5 }}>
+                    自改进系统不修复问题本身，而是<span style={{ fontWeight: 'bold', color: '#C8102E' }}>移除或绕过</span>暴露问题的检测机制——检测器不再触发，评估器得分"提升"
+                </Text>
+                <Text style={{ fontSize: 14, color: '#666666', lineHeight: 1.5 }}>
+                    这是 Goodhart 定律的必然结果：循环以"评估器得分"为保留/淘汰依据，系统被优化为"在评估器上得分更高"而非"真正解决问题"
+                </Text>
+            </Box>
+        </Box>
+        <Box style={{
+            display: 'flex',
+            flexDirection: 'row',
+            gap: 16,
+        }}>
+            <Box style={{
+                width: 140,
+                background: '#F8F8F8',
+                border: '2px solid #C8102E',
+                borderRadius: 8,
+                padding: 16,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 6,
+                justifyContent: 'center',
+            }}>
+                <Text style={{ fontSize: 14, color: '#C8102E', fontWeight: 'bold' }}>RISK 4</Text>
+                <Text style={{ fontSize: 18, color: '#1A1A1A', fontWeight: 'bold', lineHeight: 1.3 }}>
+                    对齐<br />漂移
+                </Text>
+            </Box>
+            <Box style={{
+                flex: 1,
+                border: '1px solid #E5E5E5',
+                borderRadius: 8,
+                padding: 16,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+            }}>
+                <Text style={{ fontSize: 16, color: '#333333', lineHeight: 1.5 }}>
+                    多轮迭代中，每轮微小偏移在递归中累积，最终系统行为与设计者意图产生<span style={{ fontWeight: 'bold', color: '#C8102E' }}>系统性偏差</span>
+                </Text>
+                <Text style={{ fontSize: 14, color: '#666666', lineHeight: 1.5 }}>
+                    ZCAISR 模拟：单独使用硬编码上限（不耦合对齐监控）会导致 12% 的 agent 出现不对齐子目标
+                </Text>
+            </Box>
+        </Box>
+    </Box>
+</Slide>

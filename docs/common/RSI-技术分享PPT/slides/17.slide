@@ -1,0 +1,161 @@
+<Slide style={{
+    width: '1280px',
+    height: '720px',
+    background: '#FFFFFF',
+    padding: '50px 80px',
+    display: 'flex',
+    flexDirection: 'column',
+}}>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
+        marginBottom: 18,
+    }}>
+        <Text style={{ fontSize: 14, color: '#C8102E', fontWeight: 'bold' }}>06 本地实践</Text>
+        <Text style={{ fontSize: 32, color: '#1A1A1A', fontWeight: 'bold' }}>jiuwenswarm RSI 归类判定</Text>
+        <Box style={{ width: '100%', height: 2, background: '#C8102E', marginTop: 2 }} />
+    </Box>
+    <Box style={{
+        display: 'flex',
+        flexDirection: 'row',
+        gap: 20,
+        flex: 1,
+    }}>
+        <Box style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 14,
+        }}>
+            <Text style={{ fontSize: 16, color: '#C8102E', fontWeight: 'bold' }}>三条判据</Text>
+            <Box style={{
+                border: '1px solid #E5E5E5',
+                borderRadius: 8,
+                padding: 14,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+            }}>
+                <Box style={{ display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                    <Box style={{ width: 28, height: 28, borderRadius: 14, background: '#C8102E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Text style={{ fontSize: 14, color: '#FFFFFF', fontWeight: 'bold' }}>1</Text>
+                    </Box>
+                    <Box style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        <Text style={{ fontSize: 15, color: '#333333', fontWeight: 'bold' }}>改什么 → harness 外围</Text>
+                        <Text style={{ fontSize: 13, color: '#666666' }}>prompt_sections / tools / rails / skills / runtime.yaml</Text>
+                    </Box>
+                    <Text style={{ fontSize: 14, color: '#C8102E', fontWeight: 'bold' }}>C 类</Text>
+                </Box>
+            </Box>
+            <Box style={{
+                border: '1px solid #E5E5E5',
+                borderRadius: 8,
+                padding: 14,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+            }}>
+                <Box style={{ display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                    <Box style={{ width: 28, height: 28, borderRadius: 14, background: '#C8102E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Text style={{ fontSize: 14, color: '#FFFFFF', fontWeight: 'bold' }}>2</Text>
+                    </Box>
+                    <Box style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        <Text style={{ fontSize: 15, color: '#333333', fontWeight: 'bold' }}>模型是否冻结 → 权重不动</Text>
+                        <Text style={{ fontSize: 13, color: '#666666' }}>model_config_ref 全程只读，零权重更新</Text>
+                    </Box>
+                    <Text style={{ fontSize: 14, color: '#999999', fontWeight: 'bold' }}>非 D 类</Text>
+                </Box>
+            </Box>
+            <Box style={{
+                border: '1px solid #E5E5E5',
+                borderRadius: 8,
+                padding: 14,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+            }}>
+                <Box style={{ display: 'flex', flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                    <Box style={{ width: 28, height: 28, borderRadius: 14, background: '#C8102E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Text style={{ fontSize: 14, color: '#FFFFFF', fontWeight: 'bold' }}>3</Text>
+                    </Box>
+                    <Box style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                        <Text style={{ fontSize: 15, color: '#333333', fontWeight: 'bold' }}>收敛靠什么 → case 集门禁</Text>
+                        <Text style={{ fontSize: 13, color: '#666666' }}>两阶段晋级判定，非种群进化搜索</Text>
+                    </Box>
+                    <Text style={{ fontSize: 14, color: '#999999', fontWeight: 'bold' }}>非 A 类</Text>
+                </Box>
+            </Box>
+            <Box style={{
+                background: '#FFF5F5',
+                borderRadius: 8,
+                padding: 12,
+                border: '1px solid #F0D0D0',
+            }}>
+                <Text style={{ fontSize: 14, color: '#333333', lineHeight: 1.5 }}>
+                    <span style={{ fontWeight: 'bold', color: '#C8102E' }}>结论</span>：主链路 = C 类（RRSI 路线），吸收 Recuris/AgentFactory 的技能固化思路；旁路 auto_harness = B 类
+                </Text>
+            </Box>
+        </Box>
+        <Box style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 10,
+        }}>
+            <Text style={{ fontSize: 16, color: '#C8102E', fontWeight: 'bold' }}>两套系统辨析</Text>
+            <Table
+                style={{ width: '100%', flex: 1 }}
+                defaultTextStyle={{ fontSize: 12, textAlign: 'center', color: '#333333' }}
+                defaultCellStyle={{
+                    border: {
+                        left: { width: 1, color: '#E5E5E5' },
+                        right: { width: 1, color: '#E5E5E5' },
+                        top: { width: 1, color: '#E5E5E5' },
+                        bottom: { width: 1, color: '#E5E5E5' },
+                    },
+                }}
+                cells={[
+                    [
+                        { text: '维度', textStyle: { bold: true, color: '#FFFFFF', fontSize: 13 }, cellStyle: { background: { color: '#C8102E' } } },
+                        { text: 'single_harness\n（C 类）', textStyle: { bold: true, color: '#FFFFFF', fontSize: 13 }, cellStyle: { background: { color: '#C8102E' } } },
+                        { text: 'auto_harness\n（B 类）', textStyle: { bold: true, color: '#FFFFFF', fontSize: 13 }, cellStyle: { background: { color: '#8B0000' } } },
+                    ],
+                    [
+                        { text: '改进对象', textStyle: { bold: true } },
+                        'ExpertHarness\n包内文件',
+                        'jiuwenswarm/\nopenjiuwen 源码',
+                    ],
+                    [
+                        { text: '编辑范围', textStyle: { bold: true }, cellStyle: { background: { color: '#F8F8F8' } } },
+                        { text: '5 类路径前缀\n白名单硬校验', cellStyle: { background: { color: '#F8F8F8' } } },
+                        { text: 'ALLOWED_SOURCE\n_EDIT_PREFIXES', cellStyle: { background: { color: '#F8F8F8' } } },
+                    ],
+                    [
+                        { text: '收敛机制', textStyle: { bold: true } },
+                        '两阶段 case\n集晋级门禁',
+                        'CI 门禁 +\n代码评审 + PR',
+                    ],
+                    [
+                        { text: '隔离方式', textStyle: { bold: true }, cellStyle: { background: { color: '#F8F8F8' } } },
+                        { text: '每 action 一个\ngit worktree', cellStyle: { background: { color: '#F8F8F8' } } },
+                        { text: 'git worktree +\nci_gate_runner', cellStyle: { background: { color: '#F8F8F8' } } },
+                    ],
+                    [
+                        { text: '产物', textStyle: { bold: true } },
+                        '新 harness\n包引用',
+                        'git commit / PR',
+                    ],
+                    [
+                        { text: '递归深度', textStyle: { bold: true }, cellStyle: { background: { color: '#F8F8F8' } } },
+                        { text: '单层\n（改包）', cellStyle: { background: { color: '#F8F8F8' } } },
+                        { text: '多层\n（能改改包的系统）', cellStyle: { background: { color: '#F8F8F8' } } },
+                    ],
+                ]}
+            />
+            <Text style={{ fontSize: 12, color: '#999999', textAlign: 'center' }}>
+                共用 openjiuwen.rsi 命名空间，但入口、收敛机制、产物形态完全不同
+            </Text>
+        </Box>
+    </Box>
+</Slide>
