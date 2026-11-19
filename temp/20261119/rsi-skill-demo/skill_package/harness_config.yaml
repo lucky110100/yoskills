@@ -1,0 +1,8 @@
+# math-tutor skill 初始 harness 配置（待 RSI 改进的薄弱版本）
+name: math-tutor
+description: 面向中小学生的数学辅导 skill，负责解答计算题、代数题与逻辑推理题。
+language: zh
+prompts:
+  sections:
+    - identity
+    - method
